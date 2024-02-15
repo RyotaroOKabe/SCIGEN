@@ -23,6 +23,9 @@ import pdb
 
 import os
 
+from inpcrysdiff.pl_modules.diffusion_w_type import sample_inpaint  #!
+
+
 train_dist = {
     'perov_5' : [0, 0, 0, 0, 0, 1],
     'carbon_24' : [0.0,
@@ -85,7 +88,7 @@ def diffusion(loader, model, step_lr):      #TODO
 
         if torch.cuda.is_available():
             batch.cuda()
-        outputs, traj = model.sample(batch, step_lr = step_lr)      #TODO
+        outputs, traj = model.sample_inpaint(batch, step_lr = step_lr)      #TODO
         frac_coords.append(outputs['frac_coords'].detach().cpu())
         num_atoms.append(outputs['num_atoms'].detach().cpu())
         atom_types.append(outputs['atom_types'].detach().cpu())
@@ -107,8 +110,61 @@ class SampleDataset(Dataset):      #TODO
         super().__init__()
         self.total_num = total_num
         self.distribution = train_dist[dataset]
-        self.num_atoms = np.random.choice(len(self.distribution), total_num, p = self.distribution)
+        self.num_known_arch = {'kagome': 3, 'honeycomb': 2, 'triangular': 1}    #!
+        self.num_known_options = [self.num_known_arch[k] for k in self.arch_type]   #!
+        self.num_known = np.random.choice(self.num_known_options, self.total_num) #, p = None)  #!
+        # self.num_atoms = np.random.choice(len(self.distribution), total_num, p = self.distribution)   #!
         self.is_carbon = dataset == 'carbon_24'
+        
+        self.bond_mu_sigma = bond_mu_sigma  #!
+        self.known_species = known_species  #!
+        self.arch_type = arch_type  #!
+        
+        self.distributions = {} #!
+        self.num_atomss = {}
+        self.num_atoms = np.zeros(self.total_num)
+        for n in self.num_known_options:
+            # Make a copy of self.distribution for each key
+            type_distribution = self.distribution.copy()
+            # Set the first n elements to 0
+            type_distribution[:n+1] = [0] * (n + 1)
+            num_atoms_ = np.random.choice(len(type_distribution), total_num, p = type_distribution)
+            mask = self.num_known == n
+            self.num_atoms += mask * num_atoms_
+            # self.distributions[n] = type_distribution
+            # self.num_atomss[n] = np.random.choice(len(type_distribution), total_num, p = type_distribution)
+        
+        self.frac_coords_archs = {1: torch.tensor([[0.0, 0.0, 0.0]]), 2:torch.tensor([[1/3, 2/3, 0.0], [2/3, 1/3, 0.0]]), 3: torch.tensor([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0]])}
+
+    def get_known_fcoords(self):    #!
+        # use arch_type, num_atoms
+        # return frac_coords_known, mask_x
+        self.num_unk = self.num_atoms - self.num_known
+        self.frac_coords_list_known = [self.frac_coords_archs[n] for n in self.num_known]   # function of num_known, num_atoms, (num_known_arch?)  #?
+        self.frac_coords_list_zeros = [torch.zeros(natm, 3) for natm in self.num_atoms]
+        self.frac_coords_list = []
+        self.mask_x_list = []
+        for i, (fcoords_kn, fcoords_z) in enumerate(zip(self.frac_coords_list_known, self.frac_coords_list_zeros)):
+            n_kn = fcoords_kn.shape[0]
+            fcoords, mask = fcoords_z.copy(), fcoords_z.copy()
+            fcoords[:n_kn, :] = fcoords_kn
+            mask[:n_kn, :] = torch.ones_like(fcoords_kn) 
+            self.frac_coords_list.append(fcoords)
+            self.mask_x_list.append(mask[:, 0].flatten())
+        
+    def get_known_lattice(self):    #TODO
+        # use arch_type, bond_mu_sigma
+        # return lattice_known, mask_l
+        self.lattice_list = None # Lattice matrices (batch, 3, 3). vec{a} and vec{b} are determined, but vec{c} are random.    #?
+        self.mask_l = None   # (batch, 3, 3) stack torch.tensor([[1,1,1],[1,1,1],[0,0,0]]).
+
+    def get_known_atypes(self):    #TODO
+        # use arch_type, known_species, num_atoms
+        # run this after get_known_fcoords(), so that we then already know return frac_coords_known, mask_x, num_known. 
+        # return atom_types_known, mask_t
+        self.atom_types_list = None # function of num_known, num_atoms, (num_known_arch?)
+        self.mask_t_list = self.mask_x_list   # function of self.mask_x. 
+    
 
     def __len__(self) -> int:
         return self.total_num
@@ -116,9 +172,24 @@ class SampleDataset(Dataset):      #TODO
     def __getitem__(self, index):
 
         num_atom = self.num_atoms[index]
+        num_known_ = self.num_known[index]    #TODO
+        frac_coords_known_=self.frac_coords_list[index],    #TODO   check dataset.py, datamodule.py
+        lattice_known_=self.lattice_list[index],    #TODO
+        atom_types_known_=self.atom_types_list[index],    #TODO
+        mask_x_=None,    #TODO
+        mask_l_=None,    #TODO
+        mask_t_=None,    #TODO
         data = Data(
             num_atoms=torch.LongTensor([num_atom]),
             num_nodes=num_atom,
+            num_known=num_known_,    #!
+            frac_coords_known=frac_coords_known_,    #!
+            lattice_known=lattice_known_,    #!
+            atom_types_known=atom_types_known_,    #!
+            mask_x=mask_x_,    #!
+            mask_l=mask_l_,    #!
+            mask_t=mask_t_,    #!
+            
         )
         if self.is_carbon:
             data.atom_types = torch.LongTensor([6] * num_atom)
@@ -134,14 +205,14 @@ def main(args):
     if torch.cuda.is_available():
         model.to('cuda')
 
+    model.sample_inpaint = sample_inpaint.__get__(model)    #!
+
     print('Evaluate the diffusion model.')
 
     test_set = SampleDataset(args.dataset, args.batch_size * args.num_batches_to_samples, args.bond_mu_sigma, args.known_species, args.arch)     #TODO
     test_loader = DataLoader(test_set, batch_size = args.batch_size)
 
     step_lr = args.step_lr if args.step_lr >= 0 else recommand_step_lr['gen'][args.dataset]
-
-    print(step_lr)
 
     start_time = time.time()
     (frac_coords, atom_types, lattices, lengths, angles, num_atoms) = diffusion(test_loader, model, step_lr)      #TODO

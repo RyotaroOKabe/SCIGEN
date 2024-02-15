@@ -272,9 +272,9 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
         l_t_unk = traj[t]['lattices']    #TODO
         t_t_unk = traj[t]['atom_types']    #TODO
 
-        x_t_known = traj[t]['frac_coords']    #TODO: can skip??
-        l_t_known = traj[t]['lattices']    #TODO: can skip??
-        t_t_known = traj[t]['atom_types']    #TODO: can skip??
+        # x_t_known = traj[t]['frac_coords']    #TODO: can skip??
+        # l_t_known = traj[t]['lattices']    #TODO: can skip??
+        # t_t_known = traj[t]['atom_types']    #TODO: can skip??
 
         if self.keep_coords:
             x_t = x_T
