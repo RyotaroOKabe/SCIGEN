@@ -74,7 +74,7 @@ train_dist = {
 }
 
 
-def diffusion(loader, model, step_lr):
+def diffusion(loader, model, step_lr):      #TODO
 
     frac_coords = []
     num_atoms = []
@@ -85,7 +85,7 @@ def diffusion(loader, model, step_lr):
 
         if torch.cuda.is_available():
             batch.cuda()
-        outputs, traj = model.sample(batch, step_lr = step_lr)
+        outputs, traj = model.sample(batch, step_lr = step_lr)      #TODO
         frac_coords.append(outputs['frac_coords'].detach().cpu())
         num_atoms.append(outputs['num_atoms'].detach().cpu())
         atom_types.append(outputs['atom_types'].detach().cpu())
@@ -101,9 +101,9 @@ def diffusion(loader, model, step_lr):
         frac_coords, atom_types, lattices, lengths, angles, num_atoms
     )
 
-class SampleDataset(Dataset):
+class SampleDataset(Dataset):      #TODO
 
-    def __init__(self, dataset, total_num):
+    def __init__(self, dataset, total_num, bond_mu_sigma, known_species, arch_type):
         super().__init__()
         self.total_num = total_num
         self.distribution = train_dist[dataset]
@@ -136,7 +136,7 @@ def main(args):
 
     print('Evaluate the diffusion model.')
 
-    test_set = SampleDataset(args.dataset, args.batch_size * args.num_batches_to_samples)
+    test_set = SampleDataset(args.dataset, args.batch_size * args.num_batches_to_samples, args.bond_mu_sigma, args.known_species, args.arch)     #TODO
     test_loader = DataLoader(test_set, batch_size = args.batch_size)
 
     step_lr = args.step_lr if args.step_lr >= 0 else recommand_step_lr['gen'][args.dataset]
@@ -144,7 +144,7 @@ def main(args):
     print(step_lr)
 
     start_time = time.time()
-    (frac_coords, atom_types, lattices, lengths, angles, num_atoms) = diffusion(test_loader, model, step_lr)
+    (frac_coords, atom_types, lattices, lengths, angles, num_atoms) = diffusion(test_loader, model, step_lr)      #TODO
 
     if args.label == '':
         gen_out_name = 'eval_gen.pt'
@@ -170,6 +170,11 @@ if __name__ == '__main__':
     parser.add_argument('--num_batches_to_samples', default=20, type=int)
     parser.add_argument('--batch_size', default=500, type=int)
     parser.add_argument('--label', default='')
+    
+    parser.add_argument('--bond_mu_sigma', default=[5, 2])  #!
+    parser.add_argument('--known_species', default=['Fe', 'Co', 'Ni', 'Gd', 'Dy', 'Nd', 'Ru'])  #!
+    parser.add_argument('--arch', default=['kagome']) # 'kagome', 'honeycomb', 'triangular' #!
+    
     args = parser.parse_args()
 
 

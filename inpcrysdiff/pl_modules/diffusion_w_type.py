@@ -17,12 +17,19 @@ from torch_scatter.composite import scatter_softmax
 from torch_geometric.utils import to_dense_adj, dense_to_sparse
 from tqdm import tqdm
 
-from diffcsp.common.utils import PROJECT_ROOT
-from diffcsp.common.data_utils import (
+# from diffcsp.common.utils import PROJECT_ROOT
+# from diffcsp.common.data_utils import (
+#     EPSILON, cart_to_frac_coords, mard, lengths_angles_to_volume, lattice_params_to_matrix_torch,
+#     frac_to_cart_coords, min_distance_sqr_pbc)
+
+# from diffcsp.pl_modules.diff_utils import d_log_p_wrapped_normal
+from inpcrysdiff.common.utils import PROJECT_ROOT
+from inpcrysdiff.common.data_utils import (
     EPSILON, cart_to_frac_coords, mard, lengths_angles_to_volume, lattice_params_to_matrix_torch,
     frac_to_cart_coords, min_distance_sqr_pbc)
 
-from diffcsp.pl_modules.diff_utils import d_log_p_wrapped_normal
+from inpcrysdiff.pl_modules.diff_utils import d_log_p_wrapped_normal
+
 
 MAX_ATOMIC_NUM=100
 
@@ -66,7 +73,7 @@ class SinusoidalTimeEmbeddings(nn.Module):
         return embeddings
 
 
-class CSPDiffusion(BaseModule):
+class CSPDiffusion(BaseModule):      #TODO
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         
@@ -139,15 +146,24 @@ class CSPDiffusion(BaseModule):
         }
 
     @torch.no_grad()
-    def sample(self, batch, diff_ratio = 1.0, step_lr = 1e-5):
+    def sample(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
 
 
         batch_size = batch.num_graphs
 
-        l_T, x_T = torch.randn([batch_size, 3, 3]).to(self.device), torch.rand([batch.num_nodes, 3]).to(self.device)
+        l_T_unk, x_T_unk = torch.randn([batch_size, 3, 3]).to(self.device), torch.rand([batch.num_nodes, 3]).to(self.device)    #TODO
 
-        t_T = torch.randn([batch.num_nodes, MAX_ATOMIC_NUM]).to(self.device)
+        t_T_unk = torch.randn([batch.num_nodes, MAX_ATOMIC_NUM]).to(self.device)    #TODO
 
+        l_T_known, x_T_known = torch.randn([batch_size, 3, 3]).to(self.device), torch.rand([batch.num_nodes, 3]).to(self.device)       #TODO
+        t_T_known = torch.randn([batch.num_nodes, MAX_ATOMIC_NUM]).to(self.device)    #TODO
+        
+        l_0_known, x_0_known, t_0_known = batch.lattice_known, batch.frac_coords_known, batch.atom_types_known
+        mask_l, mask_x, mask_t = batch.mask_l, batch.mask_x, batch.mask_t   #TODO
+        
+        x_T = mask_x * x_T_known + (1 - mask_x) * x_T_unk     #TODO
+        l_T = mask_l * l_T_known + (1 - mask_l) * l_T_unk     #TODO
+        t_T = mask_t * t_T_known + (1 - mask_t) * t_T_unk     #TODO
 
         if self.keep_coords:
             x_T = batch.frac_coords
@@ -179,9 +195,13 @@ class CSPDiffusion(BaseModule):
             c0 = 1.0 / torch.sqrt(alphas)
             c1 = (1 - alphas) / torch.sqrt(1 - alphas_cumprod)
 
-            x_t = traj[t]['frac_coords']
-            l_t = traj[t]['lattices']
-            t_t = traj[t]['atom_types']
+            x_t_unk = traj[t]['frac_coords']    #TODO
+            l_t_unk = traj[t]['lattices']    #TODO
+            t_t_unk = traj[t]['atom_types']    #TODO
+
+            x_t_known = traj[t]['frac_coords']    #TODO: can skip??
+            l_t_known = traj[t]['lattices']    #TODO: can skip??
+            t_t_known = traj[t]['atom_types']    #TODO: can skip??
 
             if self.keep_coords:
                 x_t = x_T
@@ -202,12 +222,25 @@ class CSPDiffusion(BaseModule):
 
             pred_x = pred_x * torch.sqrt(sigma_norm)
 
-            x_t_minus_05 = x_t - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t
+            x_t_minus_05_unk = x_t_unk - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t   #TODO
 
-            l_t_minus_05 = l_t
+            l_t_minus_05_unk = l_t_unk   #TODO
 
-            t_t_minus_05 = t_t
+            t_t_minus_05_unk = t_t_unk   #TODO
 
+            rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)    #TODO
+            rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)    #TODO
+            rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)    #TODO
+            
+            x_t_minus_05_known = (x_0_known + sigma_x*rand_x_known)%1   #TODO
+            l_t_minus_05_known = c0 * l_0_known + c1 * rand_l_known     #TODO
+            t_t_minus_05_known = c0 * t_0_known + c1 * rand_t_known    #TODO
+
+            x_t_minus_05 = mask_x * x_t_minus_05_known + (1 - mask_x) * x_t_minus_05_unk  #TODO
+            l_t_minus_05 = mask_l * l_t_minus_05_known + (1 - mask_l) * l_t_minus_05_unk   #TODO
+            t_t_minus_05 = mask_t * t_t_minus_05_known + (1 - mask_t) * t_t_minus_05_unk   #TODO
+            
+            
 
             # Predictor
 
@@ -224,11 +257,23 @@ class CSPDiffusion(BaseModule):
 
             pred_x = pred_x * torch.sqrt(sigma_norm)
 
-            x_t_minus_1 = x_t_minus_05 - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t
+            x_t_minus_1_unk = x_t_minus_05 - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t   #TODO
 
-            l_t_minus_1 = c0 * (l_t_minus_05 - c1 * pred_l) + sigmas * rand_l if not self.keep_lattice else l_t
+            l_t_minus_1_unk = c0 * (l_t_minus_05 - c1 * pred_l) + sigmas * rand_l if not self.keep_lattice else l_t   #TODO
 
-            t_t_minus_1 = c0 * (t_t_minus_05 - c1 * pred_t) + sigmas * rand_t
+            t_t_minus_1_unk = c0 * (t_t_minus_05 - c1 * pred_t) + sigmas * rand_t   #TODO
+
+            rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)    #TODO
+            rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)    #TODO
+            rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)    #TODO
+            
+            x_t_minus_1_known = (x_0_known + sigma_x*rand_x_known)%1    #TODO
+            l_t_minus_1_known = c0 * l_0_known + c1 * rand_l_known     #TODO
+            t_t_minus_1_known = c0 * t_0_known + c1 * rand_t_known   #TODO
+
+            x_t_minus_1 = mask_x * x_t_minus_1_known + (1 - mask_x) * x_t_minus_1_unk  #TODO
+            l_t_minus_1 = mask_l * l_t_minus_1_known + (1 - mask_l) * l_t_minus_1_unk   #TODO
+            t_t_minus_1 = mask_t * t_t_minus_1_known + (1 - mask_t) * t_t_minus_1_unk   #TODO
 
             traj[t - 1] = {
                 'num_atoms' : batch.num_atoms,
