@@ -146,151 +146,8 @@ class CSPDiffusion(BaseModule):      #TODO
         }
 
     @torch.no_grad()
-    def sample(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
-
-
-        batch_size = batch.num_graphs
-
-        l_T_unk, x_T_unk = torch.randn([batch_size, 3, 3]).to(self.device), torch.rand([batch.num_nodes, 3]).to(self.device)    #TODO
-
-        t_T_unk = torch.randn([batch.num_nodes, MAX_ATOMIC_NUM]).to(self.device)    #TODO
-
-        l_T_known, x_T_known = torch.randn([batch_size, 3, 3]).to(self.device), torch.rand([batch.num_nodes, 3]).to(self.device)       #TODO
-        t_T_known = torch.randn([batch.num_nodes, MAX_ATOMIC_NUM]).to(self.device)    #TODO
-        
-        l_0_known, x_0_known, t_0_known = batch.lattice_known, batch.frac_coords_known, batch.atom_types_known
-        mask_l, mask_x, mask_t = batch.mask_l, batch.mask_x, batch.mask_t   #TODO
-        
-        x_T = mask_x * x_T_known + (1 - mask_x) * x_T_unk     #TODO
-        l_T = mask_l * l_T_known + (1 - mask_l) * l_T_unk     #TODO
-        t_T = mask_t * t_T_known + (1 - mask_t) * t_T_unk     #TODO
-
-        if self.keep_coords:
-            x_T = batch.frac_coords
-
-        if self.keep_lattice:
-            l_T = lattice_params_to_matrix_torch(batch.lengths, batch.angles)
-        
-
-        traj = {self.beta_scheduler.timesteps : {
-            'num_atoms' : batch.num_atoms,
-            'atom_types' : t_T,
-            'frac_coords' : x_T % 1.,
-            'lattices' : l_T
-        }}
-
-        for t in tqdm(range(self.beta_scheduler.timesteps, 0, -1)):
-
-            times = torch.full((batch_size, ), t, device = self.device)
-
-            time_emb = self.time_embedding(times)
-            
-            alphas = self.beta_scheduler.alphas[t]
-            alphas_cumprod = self.beta_scheduler.alphas_cumprod[t]
-
-            sigmas = self.beta_scheduler.sigmas[t]
-            sigma_x = self.sigma_scheduler.sigmas[t]
-            sigma_norm = self.sigma_scheduler.sigmas_norm[t]
-
-            c0 = 1.0 / torch.sqrt(alphas)
-            c1 = (1 - alphas) / torch.sqrt(1 - alphas_cumprod)
-
-            x_t_unk = traj[t]['frac_coords']    #TODO
-            l_t_unk = traj[t]['lattices']    #TODO
-            t_t_unk = traj[t]['atom_types']    #TODO
-
-            x_t_known = traj[t]['frac_coords']    #TODO: can skip??
-            l_t_known = traj[t]['lattices']    #TODO: can skip??
-            t_t_known = traj[t]['atom_types']    #TODO: can skip??
-
-            if self.keep_coords:
-                x_t = x_T
-
-            if self.keep_lattice:
-                l_t = l_T
-
-            # Corrector
-
-            rand_l = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)
-            rand_t = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)
-            rand_x = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)
-
-            step_size = step_lr * (sigma_x / self.sigma_scheduler.sigma_begin) ** 2
-            std_x = torch.sqrt(2 * step_size)
-
-            pred_l, pred_x, pred_t = self.decoder(time_emb, t_t, x_t, l_t, batch.num_atoms, batch.batch)
-
-            pred_x = pred_x * torch.sqrt(sigma_norm)
-
-            x_t_minus_05_unk = x_t_unk - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t   #TODO
-
-            l_t_minus_05_unk = l_t_unk   #TODO
-
-            t_t_minus_05_unk = t_t_unk   #TODO
-
-            rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)    #TODO
-            rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)    #TODO
-            rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)    #TODO
-            
-            x_t_minus_05_known = (x_0_known + sigma_x*rand_x_known)%1   #TODO
-            l_t_minus_05_known = c0 * l_0_known + c1 * rand_l_known     #TODO
-            t_t_minus_05_known = c0 * t_0_known + c1 * rand_t_known    #TODO
-
-            x_t_minus_05 = mask_x * x_t_minus_05_known + (1 - mask_x) * x_t_minus_05_unk  #TODO
-            l_t_minus_05 = mask_l * l_t_minus_05_known + (1 - mask_l) * l_t_minus_05_unk   #TODO
-            t_t_minus_05 = mask_t * t_t_minus_05_known + (1 - mask_t) * t_t_minus_05_unk   #TODO
-            
-            
-
-            # Predictor
-
-            rand_l = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)
-            rand_t = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)
-            rand_x = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)
-
-            adjacent_sigma_x = self.sigma_scheduler.sigmas[t-1] 
-            step_size = (sigma_x ** 2 - adjacent_sigma_x ** 2)
-            std_x = torch.sqrt((adjacent_sigma_x ** 2 * (sigma_x ** 2 - adjacent_sigma_x ** 2)) / (sigma_x ** 2))   
-
-
-            pred_l, pred_x, pred_t = self.decoder(time_emb, t_t_minus_05, x_t_minus_05, l_t_minus_05, batch.num_atoms, batch.batch)
-
-            pred_x = pred_x * torch.sqrt(sigma_norm)
-
-            x_t_minus_1_unk = x_t_minus_05 - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t   #TODO
-
-            l_t_minus_1_unk = c0 * (l_t_minus_05 - c1 * pred_l) + sigmas * rand_l if not self.keep_lattice else l_t   #TODO
-
-            t_t_minus_1_unk = c0 * (t_t_minus_05 - c1 * pred_t) + sigmas * rand_t   #TODO
-
-            rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)    #TODO
-            rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)    #TODO
-            rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)    #TODO
-            
-            x_t_minus_1_known = (x_0_known + sigma_x*rand_x_known)%1    #TODO
-            l_t_minus_1_known = c0 * l_0_known + c1 * rand_l_known     #TODO
-            t_t_minus_1_known = c0 * t_0_known + c1 * rand_t_known   #TODO
-
-            x_t_minus_1 = mask_x * x_t_minus_1_known + (1 - mask_x) * x_t_minus_1_unk  #TODO
-            l_t_minus_1 = mask_l * l_t_minus_1_known + (1 - mask_l) * l_t_minus_1_unk   #TODO
-            t_t_minus_1 = mask_t * t_t_minus_1_known + (1 - mask_t) * t_t_minus_1_unk   #TODO
-
-            traj[t - 1] = {
-                'num_atoms' : batch.num_atoms,
-                'atom_types' : t_t_minus_1,
-                'frac_coords' : x_t_minus_1 % 1.,
-                'lattices' : l_t_minus_1              
-            }
-
-        traj_stack = {
-            'num_atoms' : batch.num_atoms,
-            'atom_types' : torch.stack([traj[i]['atom_types'] for i in range(self.beta_scheduler.timesteps, -1, -1)]).argmax(dim=-1) + 1,
-            'all_frac_coords' : torch.stack([traj[i]['frac_coords'] for i in range(self.beta_scheduler.timesteps, -1, -1)]),
-            'all_lattices' : torch.stack([traj[i]['lattices'] for i in range(self.beta_scheduler.timesteps, -1, -1)])
-        }
-
-        return traj[0], traj_stack
-
+    def sample(self, batch, diff_ratio = 1.0, step_lr = 1e-5):
+        pass
 
 
     def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
@@ -359,4 +216,150 @@ class CSPDiffusion(BaseModule):      #TODO
 
         return log_dict, loss
 
+
+
+@torch.no_grad()
+def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
+
+
+    batch_size = batch.num_graphs
+
+    l_T_unk, x_T_unk = torch.randn([batch_size, 3, 3]).to(self.device), torch.rand([batch.num_nodes, 3]).to(self.device)    #TODO
+
+    t_T_unk = torch.randn([batch.num_nodes, MAX_ATOMIC_NUM]).to(self.device)    #TODO
+
+    l_T_known, x_T_known = torch.randn([batch_size, 3, 3]).to(self.device), torch.rand([batch.num_nodes, 3]).to(self.device)       #TODO
+    t_T_known = torch.randn([batch.num_nodes, MAX_ATOMIC_NUM]).to(self.device)    #TODO
     
+    l_0_known, x_0_known, t_0_known = batch.lattice_known, batch.frac_coords_known, batch.atom_types_known
+    mask_l, mask_x, mask_t = batch.mask_l, batch.mask_x, batch.mask_t   #TODO
+    
+    x_T = mask_x * x_T_known + (1 - mask_x) * x_T_unk     #TODO
+    l_T = mask_l * l_T_known + (1 - mask_l) * l_T_unk     #TODO
+    t_T = mask_t * t_T_known + (1 - mask_t) * t_T_unk     #TODO
+
+    if self.keep_coords:
+        x_T = batch.frac_coords
+
+    if self.keep_lattice:
+        l_T = lattice_params_to_matrix_torch(batch.lengths, batch.angles)
+    
+
+    traj = {self.beta_scheduler.timesteps : {
+        'num_atoms' : batch.num_atoms,
+        'atom_types' : t_T,
+        'frac_coords' : x_T % 1.,
+        'lattices' : l_T
+    }}
+
+    for t in tqdm(range(self.beta_scheduler.timesteps, 0, -1)):
+
+        times = torch.full((batch_size, ), t, device = self.device)
+
+        time_emb = self.time_embedding(times)
+        
+        alphas = self.beta_scheduler.alphas[t]
+        alphas_cumprod = self.beta_scheduler.alphas_cumprod[t]
+
+        sigmas = self.beta_scheduler.sigmas[t]
+        sigma_x = self.sigma_scheduler.sigmas[t]
+        sigma_norm = self.sigma_scheduler.sigmas_norm[t]
+
+        c0 = 1.0 / torch.sqrt(alphas)
+        c1 = (1 - alphas) / torch.sqrt(1 - alphas_cumprod)
+
+        x_t_unk = traj[t]['frac_coords']    #TODO
+        l_t_unk = traj[t]['lattices']    #TODO
+        t_t_unk = traj[t]['atom_types']    #TODO
+
+        x_t_known = traj[t]['frac_coords']    #TODO: can skip??
+        l_t_known = traj[t]['lattices']    #TODO: can skip??
+        t_t_known = traj[t]['atom_types']    #TODO: can skip??
+
+        if self.keep_coords:
+            x_t = x_T
+
+        if self.keep_lattice:
+            l_t = l_T
+
+        # Corrector
+
+        rand_l = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)
+        rand_t = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)
+        rand_x = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)
+
+        step_size = step_lr * (sigma_x / self.sigma_scheduler.sigma_begin) ** 2
+        std_x = torch.sqrt(2 * step_size)
+
+        pred_l, pred_x, pred_t = self.decoder(time_emb, t_t, x_t, l_t, batch.num_atoms, batch.batch)
+
+        pred_x = pred_x * torch.sqrt(sigma_norm)
+
+        x_t_minus_05_unk = x_t_unk - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t   #TODO
+
+        l_t_minus_05_unk = l_t_unk   #TODO
+
+        t_t_minus_05_unk = t_t_unk   #TODO
+
+        rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)    #TODO
+        rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)    #TODO
+        rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)    #TODO
+        
+        x_t_minus_05_known = (x_0_known + sigma_x*rand_x_known)%1   #TODO
+        l_t_minus_05_known = c0 * l_0_known + c1 * rand_l_known     #TODO
+        t_t_minus_05_known = c0 * t_0_known + c1 * rand_t_known    #TODO
+
+        x_t_minus_05 = mask_x * x_t_minus_05_known + (1 - mask_x) * x_t_minus_05_unk  #TODO
+        l_t_minus_05 = mask_l * l_t_minus_05_known + (1 - mask_l) * l_t_minus_05_unk   #TODO
+        t_t_minus_05 = mask_t * t_t_minus_05_known + (1 - mask_t) * t_t_minus_05_unk   #TODO
+        
+        
+
+        # Predictor
+
+        rand_l = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)
+        rand_t = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)
+        rand_x = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)
+
+        adjacent_sigma_x = self.sigma_scheduler.sigmas[t-1] 
+        step_size = (sigma_x ** 2 - adjacent_sigma_x ** 2)
+        std_x = torch.sqrt((adjacent_sigma_x ** 2 * (sigma_x ** 2 - adjacent_sigma_x ** 2)) / (sigma_x ** 2))   
+
+
+        pred_l, pred_x, pred_t = self.decoder(time_emb, t_t_minus_05, x_t_minus_05, l_t_minus_05, batch.num_atoms, batch.batch)
+
+        pred_x = pred_x * torch.sqrt(sigma_norm)
+
+        x_t_minus_1_unk = x_t_minus_05 - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t   #TODO
+
+        l_t_minus_1_unk = c0 * (l_t_minus_05 - c1 * pred_l) + sigmas * rand_l if not self.keep_lattice else l_t   #TODO
+
+        t_t_minus_1_unk = c0 * (t_t_minus_05 - c1 * pred_t) + sigmas * rand_t   #TODO
+
+        rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)    #TODO
+        rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)    #TODO
+        rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)    #TODO
+        
+        x_t_minus_1_known = (x_0_known + sigma_x*rand_x_known)%1    #TODO
+        l_t_minus_1_known = c0 * l_0_known + c1 * rand_l_known     #TODO
+        t_t_minus_1_known = c0 * t_0_known + c1 * rand_t_known   #TODO
+
+        x_t_minus_1 = mask_x * x_t_minus_1_known + (1 - mask_x) * x_t_minus_1_unk  #TODO
+        l_t_minus_1 = mask_l * l_t_minus_1_known + (1 - mask_l) * l_t_minus_1_unk   #TODO
+        t_t_minus_1 = mask_t * t_t_minus_1_known + (1 - mask_t) * t_t_minus_1_unk   #TODO
+
+        traj[t - 1] = {
+            'num_atoms' : batch.num_atoms,
+            'atom_types' : t_t_minus_1,
+            'frac_coords' : x_t_minus_1 % 1.,
+            'lattices' : l_t_minus_1              
+        }
+
+    traj_stack = {
+        'num_atoms' : batch.num_atoms,
+        'atom_types' : torch.stack([traj[i]['atom_types'] for i in range(self.beta_scheduler.timesteps, -1, -1)]).argmax(dim=-1) + 1,
+        'all_frac_coords' : torch.stack([traj[i]['frac_coords'] for i in range(self.beta_scheduler.timesteps, -1, -1)]),
+        'all_lattices' : torch.stack([traj[i]['lattices'] for i in range(self.beta_scheduler.timesteps, -1, -1)])
+    }
+
+    return traj[0], traj_stack
