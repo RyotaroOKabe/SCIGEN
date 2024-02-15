@@ -129,20 +129,10 @@ class SampleDataset(Dataset):      #TODO
         self.frac_coords_archs = {1: torch.tensor([[0.0, 0.0, 0.0]]), 2:torch.tensor([[1/3, 2/3, 0.0], [2/3, 1/3, 0.0]]), 
                                   3: torch.tensor([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0]])}
 
-        
-        # self.distributions = {} #!
-        # self.num_atomss = {}
-        # self.num_atoms = np.zeros(self.total_num)
-        # for n in self.num_known_options:
-        #     # Make a copy of self.distribution for each key
-        #     type_distribution = self.distribution.copy()
-        #     # Set the first n elements to 0
-        #     type_distribution[:n+1] = [0] * (n + 1)
-        #     num_atoms_ = np.random.choice(len(type_distribution), total_num, p = type_distribution)
-        #     mask = self.num_known == n
-        #     self.num_atoms += mask * num_atoms_
-            # self.distributions[n] = type_distribution
-            # self.num_atomss[n] = np.random.choice(len(type_distribution), total_num, p = type_distribution)
+        self.get_num_atoms()    #!
+        self.get_known_fcoords()    #!
+        self.get_known_lattice()    #!
+        self.get_known_atypes() #!
         
     def get_num_atoms(self):
         # self.distributions = {} #!
@@ -248,13 +238,13 @@ def main(args):
 
     print('Evaluate the diffusion model.')
 
-    test_set = SampleDataset(args.dataset, args.batch_size * args.num_batches_to_samples, args.bond_mu_sigma, args.known_species, args.arch)     #TODO
+    test_set = SampleDataset(args.dataset, args.batch_size * args.num_batches_to_samples, args.bond_mu_sigma, args.known_species, args.arch)     #!
     test_loader = DataLoader(test_set, batch_size = args.batch_size)
 
     step_lr = args.step_lr if args.step_lr >= 0 else recommand_step_lr['gen'][args.dataset]
 
     start_time = time.time()
-    (frac_coords, atom_types, lattices, lengths, angles, num_atoms) = diffusion(test_loader, model, step_lr)      #TODO
+    (frac_coords, atom_types, lattices, lengths, angles, num_atoms) = diffusion(test_loader, model, step_lr)
 
     if args.label == '':
         gen_out_name = 'eval_gen.pt'
