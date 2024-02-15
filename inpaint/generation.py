@@ -17,6 +17,9 @@ from pymatgen.io.cif import CifWriter
 from pyxtal.symmetry import Group
 import chemparse
 import numpy as np
+import math #!
+import random   #!
+from sample import chemical_symbols
 from p_tqdm import p_map
 
 import pdb
@@ -112,29 +115,49 @@ class SampleDataset(Dataset):      #TODO
         self.distribution = train_dist[dataset]
         self.num_known_arch = {'kagome': 3, 'honeycomb': 2, 'triangular': 1}    #!
         self.num_known_options = [self.num_known_arch[k] for k in self.arch_type]   #!
+        self.bond_mu, self.bond_sigma = bond_mu_sigma
+        self.lattice_a_mu_sigma = {1:[self.bond_mu, self.bond_sigma], 2:[math.sqrt(3)*self.bond_mu, math.sqrt(3)*self.bond_sigma], 
+                                   3:[2*self.bond_mu, 2*self.bond_sigma]}
         self.num_known = np.random.choice(self.num_known_options, self.total_num) #, p = None)  #!
         # self.num_atoms = np.random.choice(len(self.distribution), total_num, p = self.distribution)   #!
         self.is_carbon = dataset == 'carbon_24'
         
         self.bond_mu_sigma = bond_mu_sigma  #!
         self.known_species = known_species  #!
+        self.known_nelem = []
         self.arch_type = arch_type  #!
+        self.frac_coords_archs = {1: torch.tensor([[0.0, 0.0, 0.0]]), 2:torch.tensor([[1/3, 2/3, 0.0], [2/3, 1/3, 0.0]]), 
+                                  3: torch.tensor([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0]])}
+
         
-        self.distributions = {} #!
-        self.num_atomss = {}
+        # self.distributions = {} #!
+        # self.num_atomss = {}
+        # self.num_atoms = np.zeros(self.total_num)
+        # for n in self.num_known_options:
+        #     # Make a copy of self.distribution for each key
+        #     type_distribution = self.distribution.copy()
+        #     # Set the first n elements to 0
+        #     type_distribution[:n+1] = [0] * (n + 1)
+        #     num_atoms_ = np.random.choice(len(type_distribution), total_num, p = type_distribution)
+        #     mask = self.num_known == n
+        #     self.num_atoms += mask * num_atoms_
+            # self.distributions[n] = type_distribution
+            # self.num_atomss[n] = np.random.choice(len(type_distribution), total_num, p = type_distribution)
+        
+    def get_num_atoms(self):
+        # self.distributions = {} #!
+        # self.num_atomss = {}
         self.num_atoms = np.zeros(self.total_num)
         for n in self.num_known_options:
             # Make a copy of self.distribution for each key
             type_distribution = self.distribution.copy()
             # Set the first n elements to 0
             type_distribution[:n+1] = [0] * (n + 1)
-            num_atoms_ = np.random.choice(len(type_distribution), total_num, p = type_distribution)
+            num_atoms_ = np.random.choice(len(type_distribution), self.total_num, p = type_distribution)
             mask = self.num_known == n
             self.num_atoms += mask * num_atoms_
             # self.distributions[n] = type_distribution
-            # self.num_atomss[n] = np.random.choice(len(type_distribution), total_num, p = type_distribution)
-        
-        self.frac_coords_archs = {1: torch.tensor([[0.0, 0.0, 0.0]]), 2:torch.tensor([[1/3, 2/3, 0.0], [2/3, 1/3, 0.0]]), 3: torch.tensor([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0]])}
+            # self.num_atomss[n] = np.random.choice(len(type_distribution), total_num, p = type_distribution) 
 
     def get_known_fcoords(self):    #!
         # use arch_type, num_atoms
@@ -151,34 +174,50 @@ class SampleDataset(Dataset):      #TODO
             mask[:n_kn, :] = torch.ones_like(fcoords_kn) 
             self.frac_coords_list.append(fcoords)
             self.mask_x_list.append(mask[:, 0].flatten())
-        
-    def get_known_lattice(self):    #TODO
+    
+    def get_known_lattice(self):    #!
         # use arch_type, bond_mu_sigma
         # return lattice_known, mask_l
-        self.lattice_list = None # Lattice matrices (batch, 3, 3). vec{a} and vec{b} are determined, but vec{c} are random.    #?
-        self.mask_l = None   # (batch, 3, 3) stack torch.tensor([[1,1,1],[1,1,1],[0,0,0]]).
+        self.lattice_list = [] # Lattice matrices (batch, 3, 3). vec{a} and vec{b} are determined, but vec{c} are random.    #?
+        for i, n_kn in enumerate(self.num_known):
+            mu, sigma = self.lattice_a_mu_sigma[n_kn]
+            a, c = abs(random.gauss(mu, sigma)), mu
+            lattice = self.get_hexagonal_cell(a,c)
+            self.lattice_list.append(lattice)
+        self.mask_l_list = [torch.tensor([1,1,0]) for _ in range(self.total_nu)]   # (batch, 3, 3) stack torch.tensor([[1,1,1],[1,1,1],[0,0,0]]).
 
-    def get_known_atypes(self):    #TODO
+    def get_known_atypes(self):    #!
         # use arch_type, known_species, num_atoms
         # run this after get_known_fcoords(), so that we then already know return frac_coords_known, mask_x, num_known. 
         # return atom_types_known, mask_t
-        self.atom_types_list = None # function of num_known, num_atoms, (num_known_arch?)
+        self.atom_types_list = [] # function of num_known, num_atoms, (num_known_arch?)
+        for i, (n_kn, natm) in enumerate(zip(self.num_known, self.num_atoms)):
+            type_known = random.choice(self.known_species)
+            types_idx_known = [chemical_symbols.index(type_known)] * n_kn
+            types_unk = random.choices(chemical_symbols, k=natm-n_kn)
+            types_idx_unk = [chemical_symbols.index(elem) for elem in types_unk]
+            types = types_idx_known.extend((types_idx_unk))
+            self.atom_types_list.append(torch.tensor(types))
         self.mask_t_list = self.mask_x_list   # function of self.mask_x. 
     
+    def get_hexagonal_cell(self, a, c):
+        a1 = torch.tensor([a, 0, 0], dtype=torch.float)
+        a2 = torch.tensor([a * -0.5, a * math.sqrt(3) / 2, 0], dtype=torch.float)
+        a3 = torch.tensor([0, 0, c], dtype=torch.float)
+        lattice_matrix = torch.stack([a1, a2, a3], dim=0)
+        return lattice_matrix
 
     def __len__(self) -> int:
         return self.total_num
 
     def __getitem__(self, index):
-
         num_atom = self.num_atoms[index]
-        num_known_ = self.num_known[index]    #TODO
-        frac_coords_known_=self.frac_coords_list[index],    #TODO   check dataset.py, datamodule.py
-        lattice_known_=self.lattice_list[index],    #TODO
-        atom_types_known_=self.atom_types_list[index],    #TODO
-        mask_x_=None,    #TODO
-        mask_l_=None,    #TODO
-        mask_t_=None,    #TODO
+        num_known_ = self.num_known[index]
+        frac_coords_known_=self.frac_coords_list[index]
+        lattice_known_=self.lattice_list[index]
+        atom_types_known_=self.atom_types_list[index]
+        mask_x_, mask_l_, mask_t_ = [a[index] for a in [self.mask_x_list, self.mask_l_list, self.mask_t_list]]
+        
         data = Data(
             num_atoms=torch.LongTensor([num_atom]),
             num_nodes=num_atom,
