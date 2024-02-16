@@ -231,12 +231,13 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
     l_T_known, x_T_known = torch.randn([batch_size, 3, 3]).to(self.device), torch.rand([batch.num_nodes, 3]).to(self.device)       #TODO
     t_T_known = torch.randn([batch.num_nodes, MAX_ATOMIC_NUM]).to(self.device)    #TODO
     
-    l_0_known, x_0_known, t_0_known = batch.lattice_known, batch.frac_coords_known, batch.atom_types_known
+    l_0_known, x_0_known = batch.lattice_known, batch.frac_coords_known
+    t_0_known = F.one_hot(batch.atom_types_known - 1, num_classes=MAX_ATOMIC_NUM).float()
     mask_l, mask_x, mask_t = batch.mask_l, batch.mask_x, batch.mask_t   #TODO
     
-    x_T = mask_x * x_T_known + (1 - mask_x) * x_T_unk     #TODO
-    l_T = mask_l * l_T_known + (1 - mask_l) * l_T_unk     #TODO
-    t_T = mask_t * t_T_known + (1 - mask_t) * t_T_unk     #TODO
+    x_T = mask_x.unsqueeze(-1) * x_T_known + (1 - mask_x).unsqueeze(-1) * x_T_unk     #TODO
+    l_T = mask_l.unsqueeze(-1) * l_T_known + (1 - mask_l).unsqueeze(-1) * l_T_unk     #TODO
+    t_T = mask_t.unsqueeze(-1) * t_T_known + (1 - mask_t).unsqueeze(-1) * t_T_unk     #TODO
 
     if self.keep_coords:
         x_T = batch.frac_coords
@@ -275,6 +276,9 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
         # x_t_known = traj[t]['frac_coords']    #TODO: can skip??
         # l_t_known = traj[t]['lattices']    #TODO: can skip??
         # t_t_known = traj[t]['atom_types']    #TODO: can skip??
+        # x_t_known = (x_0_known + sigma_x*rand_x_known)%1   #TODO  # check!
+        # l_t_minus_05_known = c0 * l_0_known + c1 * rand_l_known     #TODO
+        # t_t_known = c0 * t_0_known + c1 * rand_t_known    #TODO
 
         if self.keep_coords:
             x_t = x_T
@@ -291,7 +295,7 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
         step_size = step_lr * (sigma_x / self.sigma_scheduler.sigma_begin) ** 2
         std_x = torch.sqrt(2 * step_size)
 
-        pred_l, pred_x, pred_t = self.decoder(time_emb, t_t, x_t, l_t, batch.num_atoms, batch.batch)
+        pred_l, pred_x, pred_t = self.decoder(time_emb, t_t_unk, x_t_unk, l_t_unk, batch.num_atoms, batch.batch)    #TODO  check!
 
         pred_x = pred_x * torch.sqrt(sigma_norm)
 
@@ -309,9 +313,9 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
         l_t_minus_05_known = c0 * l_0_known + c1 * rand_l_known     #TODO
         t_t_minus_05_known = c0 * t_0_known + c1 * rand_t_known    #TODO
 
-        x_t_minus_05 = mask_x * x_t_minus_05_known + (1 - mask_x) * x_t_minus_05_unk  #TODO
-        l_t_minus_05 = mask_l * l_t_minus_05_known + (1 - mask_l) * l_t_minus_05_unk   #TODO
-        t_t_minus_05 = mask_t * t_t_minus_05_known + (1 - mask_t) * t_t_minus_05_unk   #TODO
+        x_t_minus_05 = mask_x.unsqueeze(-1) * x_t_minus_05_known + (1 - mask_x).unsqueeze(-1) * x_t_minus_05_unk  #TODO
+        l_t_minus_05 = mask_l.unsqueeze(-1) * l_t_minus_05_known + (1 - mask_l).unsqueeze(-1) * l_t_minus_05_unk   #TODO
+        t_t_minus_05 = mask_t.unsqueeze(-1) * t_t_minus_05_known + (1 - mask_t).unsqueeze(-1) * t_t_minus_05_unk   #TODO
         
         
 
@@ -344,9 +348,9 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
         l_t_minus_1_known = c0 * l_0_known + c1 * rand_l_known     #TODO
         t_t_minus_1_known = c0 * t_0_known + c1 * rand_t_known   #TODO
 
-        x_t_minus_1 = mask_x * x_t_minus_1_known + (1 - mask_x) * x_t_minus_1_unk  #TODO
-        l_t_minus_1 = mask_l * l_t_minus_1_known + (1 - mask_l) * l_t_minus_1_unk   #TODO
-        t_t_minus_1 = mask_t * t_t_minus_1_known + (1 - mask_t) * t_t_minus_1_unk   #TODO
+        x_t_minus_1 = mask_x.unsqueeze(-1) * x_t_minus_1_known + (1 - mask_x).unsqueeze(-1) * x_t_minus_1_unk  #TODO
+        l_t_minus_1 = mask_l.unsqueeze(-1) * l_t_minus_1_known + (1 - mask_l).unsqueeze(-1) * l_t_minus_1_unk   #TODO
+        t_t_minus_1 = mask_t.unsqueeze(-1) * t_t_minus_1_known + (1 - mask_t).unsqueeze(-1) * t_t_minus_1_unk   #TODO
 
         traj[t - 1] = {
             'num_atoms' : batch.num_atoms,

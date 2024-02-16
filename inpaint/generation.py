@@ -1,3 +1,4 @@
+#%%
 import time
 import argparse
 import torch
@@ -26,7 +27,8 @@ import pdb
 
 import os
 
-from inpcrysdiff.pl_modules.diffusion_w_type import sample_inpaint  #!
+from inpcrysdiff.pl_modules.diffusion_w_type import sample_inpaint, MAX_ATOMIC_NUM  #!
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')   #!
 
 
 train_dist = {
@@ -114,6 +116,11 @@ class SampleDataset(Dataset):      #TODO
         self.total_num = total_num
         self.distribution = train_dist[dataset]
         self.num_known_arch = {'kagome': 3, 'honeycomb': 2, 'triangular': 1}    #!
+        self.bond_mu_sigma = bond_mu_sigma  #!
+        self.known_species = known_species  #!
+        self.arch_type = arch_type  #!
+        self.frac_coords_archs = {1: torch.tensor([[0.0, 0.0, 0.0]]), 2:torch.tensor([[1/3, 2/3, 0.0], [2/3, 1/3, 0.0]]), 
+                                  3: torch.tensor([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0]])}
         self.num_known_options = [self.num_known_arch[k] for k in self.arch_type]   #!
         self.bond_mu, self.bond_sigma = bond_mu_sigma
         self.lattice_a_mu_sigma = {1:[self.bond_mu, self.bond_sigma], 2:[math.sqrt(3)*self.bond_mu, math.sqrt(3)*self.bond_sigma], 
@@ -121,13 +128,6 @@ class SampleDataset(Dataset):      #TODO
         self.num_known = np.random.choice(self.num_known_options, self.total_num) #, p = None)  #!
         # self.num_atoms = np.random.choice(len(self.distribution), total_num, p = self.distribution)   #!
         self.is_carbon = dataset == 'carbon_24'
-        
-        self.bond_mu_sigma = bond_mu_sigma  #!
-        self.known_species = known_species  #!
-        self.known_nelem = []
-        self.arch_type = arch_type  #!
-        self.frac_coords_archs = {1: torch.tensor([[0.0, 0.0, 0.0]]), 2:torch.tensor([[1/3, 2/3, 0.0], [2/3, 1/3, 0.0]]), 
-                                  3: torch.tensor([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0]])}
 
         self.get_num_atoms()    #!
         self.get_known_fcoords()    #!
@@ -143,7 +143,9 @@ class SampleDataset(Dataset):      #TODO
             type_distribution = self.distribution.copy()
             # Set the first n elements to 0
             type_distribution[:n+1] = [0] * (n + 1)
-            num_atoms_ = np.random.choice(len(type_distribution), self.total_num, p = type_distribution)
+            sum_p = sum(type_distribution)
+            type_distribution_norm = [p / sum_p for p in type_distribution] #!
+            num_atoms_ = np.random.choice(len(type_distribution_norm), self.total_num, p = type_distribution_norm)
             mask = self.num_known == n
             self.num_atoms += mask * num_atoms_
             # self.distributions[n] = type_distribution
@@ -154,12 +156,12 @@ class SampleDataset(Dataset):      #TODO
         # return frac_coords_known, mask_x
         self.num_unk = self.num_atoms - self.num_known
         self.frac_coords_list_known = [self.frac_coords_archs[n] for n in self.num_known]   # function of num_known, num_atoms, (num_known_arch?)  #?
-        self.frac_coords_list_zeros = [torch.zeros(natm, 3) for natm in self.num_atoms]
+        self.frac_coords_list_zeros = [torch.zeros(int(natm), 3) for natm in self.num_atoms]
         self.frac_coords_list = []
         self.mask_x_list = []
         for i, (fcoords_kn, fcoords_z) in enumerate(zip(self.frac_coords_list_known, self.frac_coords_list_zeros)):
             n_kn = fcoords_kn.shape[0]
-            fcoords, mask = fcoords_z.copy(), fcoords_z.copy()
+            fcoords, mask = fcoords_z.clone(), fcoords_z.clone()
             fcoords[:n_kn, :] = fcoords_kn
             mask[:n_kn, :] = torch.ones_like(fcoords_kn) 
             self.frac_coords_list.append(fcoords)
@@ -174,7 +176,7 @@ class SampleDataset(Dataset):      #TODO
             a, c = abs(random.gauss(mu, sigma)), mu
             lattice = self.get_hexagonal_cell(a,c)
             self.lattice_list.append(lattice)
-        self.mask_l_list = [torch.tensor([1,1,0]) for _ in range(self.total_nu)]   # (batch, 3, 3) stack torch.tensor([[1,1,1],[1,1,1],[0,0,0]]).
+        self.mask_l_list = [torch.tensor([[1,1,0]]) for _ in range(self.total_num)]   # (batch, 3, 3) stack torch.tensor([[1,1,1],[1,1,1],[0,0,0]]).
 
     def get_known_atypes(self):    #!
         # use arch_type, known_species, num_atoms
@@ -184,16 +186,16 @@ class SampleDataset(Dataset):      #TODO
         for i, (n_kn, natm) in enumerate(zip(self.num_known, self.num_atoms)):
             type_known = random.choice(self.known_species)
             types_idx_known = [chemical_symbols.index(type_known)] * n_kn
-            types_unk = random.choices(chemical_symbols, k=natm-n_kn)
+            types_unk = random.choices(chemical_symbols[1:MAX_ATOMIC_NUM+1], k=int(natm-n_kn))
             types_idx_unk = [chemical_symbols.index(elem) for elem in types_unk]
-            types = types_idx_known.extend((types_idx_unk))
+            types = types_idx_known + types_idx_unk
             self.atom_types_list.append(torch.tensor(types))
         self.mask_t_list = self.mask_x_list   # function of self.mask_x. 
     
     def get_hexagonal_cell(self, a, c):
-        a1 = torch.tensor([a, 0, 0], dtype=torch.float)
-        a2 = torch.tensor([a * -0.5, a * math.sqrt(3) / 2, 0], dtype=torch.float)
-        a3 = torch.tensor([0, 0, c], dtype=torch.float)
+        a1 = torch.tensor([a, 0, 0], dtype=torch.float, device=device)
+        a2 = torch.tensor([a * -0.5, a * math.sqrt(3) / 2, 0], dtype=torch.float, device=device)
+        a3 = torch.tensor([0, 0, c], dtype=torch.float, device=device)
         lattice_matrix = torch.stack([a1, a2, a3], dim=0)
         return lattice_matrix
 
@@ -201,10 +203,10 @@ class SampleDataset(Dataset):      #TODO
         return self.total_num
 
     def __getitem__(self, index):
-        num_atom = self.num_atoms[index]
+        num_atom = np.round(self.num_atoms[index]).astype(np.int64)
         num_known_ = self.num_known[index]
         frac_coords_known_=self.frac_coords_list[index]
-        lattice_known_=self.lattice_list[index]
+        lattice_known_=self.lattice_list[index].unsqueeze(0)
         atom_types_known_=self.atom_types_list[index]
         mask_x_, mask_l_, mask_t_ = [a[index] for a in [self.mask_x_list, self.mask_l_list, self.mask_t_list]]
         
@@ -260,7 +262,7 @@ def main(args):
         'angles': angles,
     }, model_path / gen_out_name)
       
-
+#%%
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
