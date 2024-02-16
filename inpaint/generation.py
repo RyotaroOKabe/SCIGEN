@@ -86,6 +86,12 @@ metallic_radius = {'Mn': 1.27, 'Fe': 1.26, 'Co': 1.25, 'Ni': 1.24, 'Ru': 1.34, '
 
 lattice_types = {'kagome': 'hexagonal', 'honeycomb': 'hexagonal', 'triangular': 'hexagonal'}
 
+def convert_seconds_short(sec):
+    minutes, seconds = divmod(int(sec), 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    return f"{days:02d}:{hours:02d}:{minutes:02d}:{seconds:02d}"
+
 def diffusion(loader, model, step_lr):      #TODO
 
     frac_coords = []
@@ -272,6 +278,13 @@ def main(args):
     else:
         gen_out_name = f'eval_gen_{args.label}.pt'
 
+    run_time = time.time() - start_time
+    total_num = args.batch_size * args.num_batches_to_samples
+    print(f'Total outputs: {args.num_batches_to_samples} samples x {args.batch_size} batches = {total_num} materials')
+    print(f'run time: {run_time} sec = {convert_seconds_short(run_time)}')
+    print(f'{run_time/args.num_batches_to_samples} sec/sample')
+    print(f'{run_time/total_num} sec/material')
+    
     torch.save({
         'eval_setting': args,
         'frac_coords': frac_coords,
@@ -279,7 +292,7 @@ def main(args):
         'atom_types': atom_types,
         'lengths': lengths,
         'angles': angles,
-        'time': time.time() - start_time,
+        'time': run_time,
     }, model_path / gen_out_name)
       
 #%%
