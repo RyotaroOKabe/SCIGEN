@@ -81,6 +81,10 @@ train_dist = {
             0.08995430424528301]
 }
 
+# metallic radius reference (tempolary): https://en.wikipedia.org/wiki/Atomic_radii_of_the_elements_(data_page)#Note_b
+metallic_radius = {'Mn': 1.27, 'Fe': 1.26, 'Co': 1.25, 'Ni': 1.24, 'Ru': 1.34, 'Nd': 181.4, 'Gd': 180.4, 'Dy': 178.1}
+
+lattice_types = {'kagome': 'hexagonal', 'honeycomb': 'hexagonal', 'triangular': 'hexagonal'}
 
 def diffusion(loader, model, step_lr):      #TODO
 
@@ -111,28 +115,27 @@ def diffusion(loader, model, step_lr):      #TODO
 
 class SampleDataset(Dataset):      #TODO
 
-    def __init__(self, dataset, total_num, bond_mu_sigma, known_species, arch_type):
+    def __init__(self, dataset, total_num, bond_sigma_per_mu, known_species, arch_type):
         super().__init__()
         self.total_num = total_num
         self.distribution = train_dist[dataset]
         self.num_known_arch = {'kagome': 3, 'honeycomb': 2, 'triangular': 1}    #!
-        self.bond_mu_sigma = bond_mu_sigma  #!
+        self.bond_sigma_per_mu = bond_sigma_per_mu  #!
         self.known_species = known_species  #!
         self.arch_type = arch_type  #!
         self.frac_coords_archs = {1: torch.tensor([[0.0, 0.0, 0.0]]), 2:torch.tensor([[1/3, 2/3, 0.0], [2/3, 1/3, 0.0]]), 
                                   3: torch.tensor([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0]])}
         self.num_known_options = [self.num_known_arch[k] for k in self.arch_type]   #!
-        self.bond_mu, self.bond_sigma = bond_mu_sigma
-        self.lattice_a_mu_sigma = {1:[self.bond_mu, self.bond_sigma], 2:[math.sqrt(3)*self.bond_mu, math.sqrt(3)*self.bond_sigma], 
-                                   3:[2*self.bond_mu, 2*self.bond_sigma]}
+        # self.bond_mu, self.bond_sigma = bond_mu_sigma   #?
+        # self.lattice_a_mu_sigma = {1:[self.bond_mu, self.bond_sigma], 2:[math.sqrt(3)*self.bond_mu, math.sqrt(3)*self.bond_sigma], 
+        #                            3:[2*self.bond_mu, 2*self.bond_sigma]}
         self.num_known = np.random.choice(self.num_known_options, self.total_num) #, p = None)  #!
-        # self.num_atoms = np.random.choice(len(self.distribution), total_num, p = self.distribution)   #!
         self.is_carbon = dataset == 'carbon_24'
 
         self.get_num_atoms()    #!
         self.get_known_fcoords()    #!
-        self.get_known_lattice()    #!
         self.get_known_atypes() #!
+        self.get_known_lattice()    #!
         
     def get_num_atoms(self):
         # self.distributions = {} #!
@@ -170,28 +173,44 @@ class SampleDataset(Dataset):      #TODO
     def get_known_lattice(self):    #!
         # use arch_type, bond_mu_sigma
         # return lattice_known, mask_l
+        cell_type = 'hexagonal' #! tempolary. I will modify this when I generate other kind of archimedean lattice.
         self.lattice_list = [] # Lattice matrices (batch, 3, 3). vec{a} and vec{b} are determined, but vec{c} are random.    #?
         for i, n_kn in enumerate(self.num_known):
-            mu, sigma = self.lattice_a_mu_sigma[n_kn]
-            a, c = abs(random.gauss(mu, sigma)), mu
+            # mu, sigma = self.lattice_a_mu_sigma[n_kn]
+            bond_mu = 2*self.radius_known[i]
+            bond_sigma = bond_mu * self.bond_sigma_per_mu
+            bond_len1, bond_len2 = abs(random.gauss(bond_mu, bond_sigma)), abs(random.gauss(bond_mu, bond_sigma))
+            a, c = self.get_a_length(cell_type, n_kn, bond_len1), self.get_a_length(cell_type, n_kn, bond_len2) 
             lattice = self.get_hexagonal_cell(a,c)
             self.lattice_list.append(lattice)
-        self.mask_l_list = [torch.tensor([[1,1,0]]) for _ in range(self.total_num)]   # (batch, 3, 3) stack torch.tensor([[1,1,1],[1,1,1],[0,0,0]]).
+        self.mask_l_list = [torch.tensor([[1,1,1]]) for _ in range(self.total_num)]   # (batch, 3, 3) stack torch.tensor([[1,1,1],[1,1,1],[0,0,0]]).
 
     def get_known_atypes(self):    #!
         # use arch_type, known_species, num_atoms
         # run this after get_known_fcoords(), so that we then already know return frac_coords_known, mask_x, num_known. 
         # return atom_types_known, mask_t
         self.atom_types_list = [] # function of num_known, num_atoms, (num_known_arch?)
+        self.radius_known = []
         for i, (n_kn, natm) in enumerate(zip(self.num_known, self.num_atoms)):
             type_known = random.choice(self.known_species)
+            self.radius_known.append(metallic_radius[type_known])
             types_idx_known = [chemical_symbols.index(type_known)] * n_kn
             types_unk = random.choices(chemical_symbols[1:MAX_ATOMIC_NUM+1], k=int(natm-n_kn))
             types_idx_unk = [chemical_symbols.index(elem) for elem in types_unk]
             types = types_idx_known + types_idx_unk
             self.atom_types_list.append(torch.tensor(types))
         self.mask_t_list = self.mask_x_list   # function of self.mask_x. 
-    
+
+    def get_a_length(self, cell_type, num_known, bond_len):
+        if cell_type=='hexagonal':
+            if num_known == 1:
+                a = bond_len
+            elif num_known == 2:
+                a = math.sqrt(3)
+            elif num_known == 3:
+                a = 2*bond_len 
+        return a
+
     def get_hexagonal_cell(self, a, c):
         a1 = torch.tensor([a, 0, 0], dtype=torch.float, device=device)
         a2 = torch.tensor([a * -0.5, a * math.sqrt(3) / 2, 0], dtype=torch.float, device=device)
@@ -240,7 +259,7 @@ def main(args):
 
     print('Evaluate the diffusion model.')
 
-    test_set = SampleDataset(args.dataset, args.batch_size * args.num_batches_to_samples, args.bond_mu_sigma, args.known_species, args.arch)     #!
+    test_set = SampleDataset(args.dataset, args.batch_size * args.num_batches_to_samples, args.bond_sigma_per_mu, args.known_species, args.arch)     #!
     test_loader = DataLoader(test_set, batch_size = args.batch_size)
 
     step_lr = args.step_lr if args.step_lr >= 0 else recommand_step_lr['gen'][args.dataset]
@@ -260,6 +279,7 @@ def main(args):
         'atom_types': atom_types,
         'lengths': lengths,
         'angles': angles,
+        'time': time.time() - start_time,
     }, model_path / gen_out_name)
       
 #%%
@@ -273,8 +293,8 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=500, type=int)
     parser.add_argument('--label', default='')
     
-    parser.add_argument('--bond_mu_sigma', default=[5, 2])  #!
-    parser.add_argument('--known_species', default=['Fe', 'Co', 'Ni', 'Gd', 'Dy', 'Nd', 'Ru'])  #!
+    parser.add_argument('--bond_sigma_per_mu', default=0.1)  #!
+    parser.add_argument('--known_species', default=['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Dy'])  #!
     parser.add_argument('--arch', default=['kagome']) # 'kagome', 'honeycomb', 'triangular' #!
     
     args = parser.parse_args()
