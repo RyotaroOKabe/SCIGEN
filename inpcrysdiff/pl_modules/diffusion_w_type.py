@@ -234,10 +234,11 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
     l_0_known, x_0_known = batch.lattice_known, batch.frac_coords_known
     t_0_known = F.one_hot(batch.atom_types_known - 1, num_classes=MAX_ATOMIC_NUM).float()
     mask_l, mask_x, mask_t = batch.mask_l, batch.mask_x, batch.mask_t   #TODO
+    mask_x_inv, mask_l_inv, mask_t_inv = 1 - mask_x, 1 - mask_l, 1 - mask_t
     
-    x_T = mask_x.unsqueeze(-1) * x_T_known + (1 - mask_x).unsqueeze(-1) * x_T_unk     #TODO
-    l_T = mask_l.unsqueeze(-1) * l_T_known + (1 - mask_l).unsqueeze(-1) * l_T_unk     #TODO
-    t_T = mask_t.unsqueeze(-1) * t_T_known + (1 - mask_t).unsqueeze(-1) * t_T_unk     #TODO
+    x_T = mask_x.unsqueeze(-1) * x_T_known + mask_x_inv.unsqueeze(-1) * x_T_unk     #TODO
+    l_T = mask_l.unsqueeze(-1) * l_T_known + mask_l_inv.unsqueeze(-1) * l_T_unk     #TODO
+    t_T = mask_t.unsqueeze(-1) * t_T_known + mask_t_inv.unsqueeze(-1) * t_T_unk     #TODO
 
     if self.keep_coords:
         x_T = batch.frac_coords
@@ -268,6 +269,9 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
 
         c0 = 1.0 / torch.sqrt(alphas)
         c1 = (1 - alphas) / torch.sqrt(1 - alphas_cumprod)
+        
+        C0 = torch.sqrt(alphas_cumprod) #!
+        C1 = torch.sqrt(1. - alphas_cumprod)    #!
 
         x_t_unk = traj[t]['frac_coords']    #TODO
         l_t_unk = traj[t]['lattices']    #TODO
@@ -310,12 +314,12 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
         rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)    #TODO
         
         x_t_minus_05_known = (x_0_known + sigma_x*rand_x_known)%1   #TODO
-        l_t_minus_05_known = c0 * l_0_known + c1 * rand_l_known     #TODO
-        t_t_minus_05_known = c0 * t_0_known + c1 * rand_t_known    #TODO
+        l_t_minus_05_known = C0 * l_0_known + C1 * rand_l_known     #TODO
+        t_t_minus_05_known = C0 * t_0_known + C1 * rand_t_known    #TODO
 
-        x_t_minus_05 = mask_x.unsqueeze(-1) * x_t_minus_05_known + (1 - mask_x).unsqueeze(-1) * x_t_minus_05_unk  #TODO
-        l_t_minus_05 = mask_l.unsqueeze(-1) * l_t_minus_05_known + (1 - mask_l).unsqueeze(-1) * l_t_minus_05_unk   #TODO
-        t_t_minus_05 = mask_t.unsqueeze(-1) * t_t_minus_05_known + (1 - mask_t).unsqueeze(-1) * t_t_minus_05_unk   #TODO
+        x_t_minus_05 = mask_x.unsqueeze(-1) * x_t_minus_05_known + mask_x_inv.unsqueeze(-1) * x_t_minus_05_unk  #TODO
+        l_t_minus_05 = mask_l.unsqueeze(-1) * l_t_minus_05_known + mask_l_inv.unsqueeze(-1) * l_t_minus_05_unk   #TODO
+        t_t_minus_05 = mask_t.unsqueeze(-1) * t_t_minus_05_known + mask_t_inv.unsqueeze(-1) * t_t_minus_05_unk   #TODO
         
         
 
@@ -345,12 +349,12 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
         rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)    #TODO
         
         x_t_minus_1_known = (x_0_known + sigma_x*rand_x_known)%1    #TODO
-        l_t_minus_1_known = c0 * l_0_known + c1 * rand_l_known     #TODO
-        t_t_minus_1_known = c0 * t_0_known + c1 * rand_t_known   #TODO
+        l_t_minus_1_known = C0 * l_0_known + C1 * rand_l_known     #TODO
+        t_t_minus_1_known = C0 * t_0_known + C1 * rand_t_known   #TODO
 
-        x_t_minus_1 = mask_x.unsqueeze(-1) * x_t_minus_1_known + (1 - mask_x).unsqueeze(-1) * x_t_minus_1_unk  #TODO
-        l_t_minus_1 = mask_l.unsqueeze(-1) * l_t_minus_1_known + (1 - mask_l).unsqueeze(-1) * l_t_minus_1_unk   #TODO
-        t_t_minus_1 = mask_t.unsqueeze(-1) * t_t_minus_1_known + (1 - mask_t).unsqueeze(-1) * t_t_minus_1_unk   #TODO
+        x_t_minus_1 = mask_x.unsqueeze(-1) * x_t_minus_1_known + mask_x_inv.unsqueeze(-1) * x_t_minus_1_unk  #TODO
+        l_t_minus_1 = mask_l.unsqueeze(-1) * l_t_minus_1_known + mask_l_inv.unsqueeze(-1) * l_t_minus_1_unk   #TODO
+        t_t_minus_1 = mask_t.unsqueeze(-1) * t_t_minus_1_known + mask_t_inv.unsqueeze(-1) * t_t_minus_1_unk   #TODO
 
         traj[t - 1] = {
             'num_atoms' : batch.num_atoms,
