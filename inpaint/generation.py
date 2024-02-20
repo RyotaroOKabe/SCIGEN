@@ -92,10 +92,11 @@ def convert_seconds_short(sec):
     days, hours = divmod(hours, 24)
     return f"{days:02d}:{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-def diffusion(loader, model, step_lr, save_traj):      #TODO
+def diffusion(loader, model, step_lr, save_traj):
 
     frac_coords = []
     num_atoms = []
+    num_known = []  
     atom_types = []
     lattices = []
     all_frac_coords = []
@@ -106,9 +107,10 @@ def diffusion(loader, model, step_lr, save_traj):      #TODO
 
         if torch.cuda.is_available():
             batch.cuda()
-        outputs, traj = model.sample_inpaint(batch, step_lr = step_lr)      #TODO
+        outputs, traj = model.sample_inpaint(batch, step_lr = step_lr)
         frac_coords.append(outputs['frac_coords'].detach().cpu())
         num_atoms.append(outputs['num_atoms'].detach().cpu())
+        num_known.append(outputs['num_known'].detach().cpu()) 
         atom_types.append(outputs['atom_types'].detach().cpu())
         lattices.append(outputs['lattices'].detach().cpu())
         if save_traj:
@@ -118,6 +120,7 @@ def diffusion(loader, model, step_lr, save_traj):      #TODO
 
     frac_coords = torch.cat(frac_coords, dim=0)
     num_atoms = torch.cat(num_atoms, dim=0)
+    num_known = torch.cat(num_known, dim=0)
     atom_types = torch.cat(atom_types, dim=0)
     lattices = torch.cat(lattices, dim=0)
     lengths, angles = lattices_to_params_shape(lattices)
@@ -128,7 +131,7 @@ def diffusion(loader, model, step_lr, save_traj):      #TODO
         all_lengths, all_angles = lattices_to_params_shape(all_lattices)    # works for all-time outputs
 
     return (
-        frac_coords, atom_types, lattices, lengths, angles, num_atoms, all_frac_coords, all_atom_types, all_lattices, all_lengths, all_angles
+        frac_coords, atom_types, lattices, lengths, angles, num_atoms, num_known, all_frac_coords, all_atom_types, all_lattices, all_lengths, all_angles 
     )
 
 class SampleDataset(Dataset):      
@@ -177,6 +180,9 @@ class SampleDataset(Dataset):
         # return frac_coords_known, mask_x
         self.num_unk = self.num_atoms - self.num_known
         self.frac_coords_list_known = [self.frac_coords_archs[n] for n in self.num_known]   # function of num_known, num_atoms, (num_known_arch?)  #?
+        self.frac_z_known = [random.random() for _ in self.num_known]   #!
+        for i, z in enumerate(self.frac_z_known): #!
+            self.frac_coords_list_known[i][:, 2] = z    #!
         self.frac_coords_list_zeros = [torch.zeros(int(natm), 3) for natm in self.num_atoms]
         self.frac_coords_list = []
         self.mask_x_list = []
@@ -201,7 +207,7 @@ class SampleDataset(Dataset):
             a, c = self.get_a_length(cell_type, n_kn, bond_len1), self.get_a_length(cell_type, n_kn, bond_len2) 
             lattice = self.get_hexagonal_cell(a,c)
             self.lattice_list.append(lattice)
-        self.mask_l_list = [torch.tensor([[1,1,1]]) for _ in range(self.total_num)]   # (batch, 3, 3) stack torch.tensor([[1,1,1],[1,1,1],[0,0,0]]).
+        self.mask_l_list = [torch.tensor([[1,1,0]]) for _ in range(self.total_num)]   # (batch, 3, 3) stack torch.tensor([[1,1,1],[1,1,1],[0,0,0]]).
 
     def get_known_atypes(self):    #!
         # use arch_type, known_species, num_atoms
@@ -283,8 +289,8 @@ def main(args):
     step_lr = args.step_lr if args.step_lr >= 0 else recommand_step_lr['gen'][args.dataset]
 
     start_time = time.time()
-    (frac_coords, atom_types, lattices, lengths, angles, num_atoms, \
-        all_frac_coords, all_atom_types, all_lattices, all_lengths, all_angles) = diffusion(test_loader, model, step_lr, args.save_traj)
+    (frac_coords, atom_types, lattices, lengths, angles, num_atoms, num_known, \
+        all_frac_coords, all_atom_types, all_lattices, all_lengths, all_angles) = diffusion(test_loader, model, step_lr, args.save_traj)    
 
     if args.label == '':
         gen_out_name = 'eval_gen.pt'
@@ -301,6 +307,7 @@ def main(args):
     torch.save({
         'eval_setting': args,
         'num_atoms': num_atoms,
+        'num_known': num_known,
         'frac_coords': frac_coords,
         'atom_types': atom_types,
         'lengths': lengths,
@@ -325,8 +332,8 @@ if __name__ == '__main__':
 
 
     # parser.add_argument('--n_step_each', default=100, type=int) #?
-    # parser.add_argument('--min_sigma', default=0, type=float)   #!
-    parser.add_argument('--save_traj', default=False, type=bool)    #!
+    # parser.add_argument('--min_sigma', default=0, type=float)
+    parser.add_argument('--save_traj', default=False, type=bool)
 
 
     parser.add_argument('--bond_sigma_per_mu', default=0.1)  
