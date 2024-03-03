@@ -147,9 +147,6 @@ class SampleDataset(Dataset):
         self.frac_coords_archs = {1: torch.tensor([[0.0, 0.0, 0.0]]), 2:torch.tensor([[1/3, 2/3, 0.0], [2/3, 1/3, 0.0]]), 
                                   3: torch.tensor([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0]])}
         self.num_known_options = [self.num_known_arch[k] for k in self.arch_type]   
-        # self.bond_mu, self.bond_sigma = bond_mu_sigma   #?
-        # self.lattice_a_mu_sigma = {1:[self.bond_mu, self.bond_sigma], 2:[math.sqrt(3)*self.bond_mu, math.sqrt(3)*self.bond_sigma], 
-        #                            3:[2*self.bond_mu, 2*self.bond_sigma]}
         self.num_known = np.random.choice(self.num_known_options, self.total_num) #, p = None)  
         self.is_carbon = dataset == 'carbon_24'
 
@@ -172,17 +169,15 @@ class SampleDataset(Dataset):
             num_atoms_ = np.random.choice(len(type_distribution_norm), self.total_num, p = type_distribution_norm)
             mask = self.num_known == n
             self.num_atoms += mask * num_atoms_
-            # self.distributions[n] = type_distribution
-            # self.num_atomss[n] = np.random.choice(len(type_distribution), total_num, p = type_distribution) 
 
     def get_known_fcoords(self):    
         # use arch_type, num_atoms
         # return frac_coords_known, mask_x
         self.num_unk = self.num_atoms - self.num_known
         self.frac_coords_list_known = [self.frac_coords_archs[n] for n in self.num_known]   # function of num_known, num_atoms, (num_known_arch?)  #?
-        self.frac_z_known = [random.random() for _ in self.num_known]   #!
-        for i, z in enumerate(self.frac_z_known): #!
-            self.frac_coords_list_known[i][:, 2] = z    #!
+        self.frac_z_known = [random.random() for _ in self.num_known]
+        for i, z in enumerate(self.frac_z_known): 
+            self.frac_coords_list_known[i][:, 2] = z    
         self.frac_coords_list_zeros = [torch.zeros(int(natm), 3) for natm in self.num_atoms]
         self.frac_coords_list = []
         self.mask_x_list = []
@@ -200,7 +195,6 @@ class SampleDataset(Dataset):
         cell_type = 'hexagonal' #! tempolary. I will modify this when I generate other kind of archimedean lattice.
         self.lattice_list = [] # Lattice matrices (batch, 3, 3). vec{a} and vec{b} are determined, but vec{c} are random. 
         for i, n_kn in enumerate(self.num_known):
-            # mu, sigma = self.lattice_a_mu_sigma[n_kn]
             bond_mu = 2*self.radius_known[i]
             bond_sigma = bond_mu * self.bond_sigma_per_mu
             bond_len1, bond_len2 = abs(random.gauss(bond_mu, bond_sigma)), abs(random.gauss(bond_mu, bond_sigma))
@@ -209,7 +203,7 @@ class SampleDataset(Dataset):
             self.lattice_list.append(lattice)
         self.mask_l_list = [torch.tensor([[1,1,0]]) for _ in range(self.total_num)]   # (batch, 3, 3) stack torch.tensor([[1,1,1],[1,1,1],[0,0,0]]).
 
-    def get_known_atypes(self):    #!
+    def get_known_atypes(self):    
         # use arch_type, known_species, num_atoms
         # run this after get_known_fcoords(), so that we then already know return frac_coords_known, mask_x, num_known. 
         # return atom_types_known, mask_t

@@ -300,27 +300,27 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
         step_size = step_lr * (sigma_x / self.sigma_scheduler.sigma_begin) ** 2
         std_x = torch.sqrt(2 * step_size)
 
-        pred_l, pred_x, pred_t = self.decoder(time_emb, t_t_unk, x_t_unk, l_t_unk, batch.num_atoms, batch.batch)    #TODO  check!
+        pred_l, pred_x, pred_t = self.decoder(time_emb, t_t_unk, x_t_unk, l_t_unk, batch.num_atoms, batch.batch)
 
         pred_x = pred_x * torch.sqrt(sigma_norm)
 
-        x_t_minus_05_unk = x_t_unk - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t   #TODO
+        x_t_minus_05_unk = x_t_unk - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t
 
-        l_t_minus_05_unk = l_t_unk   #TODO
+        l_t_minus_05_unk = l_t_unk
 
-        t_t_minus_05_unk = t_t_unk   #TODO
+        t_t_minus_05_unk = t_t_unk
 
-        rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)    #TODO
-        rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)    #TODO
-        rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)    #TODO
+        rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)
+        rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)
+        rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)
         
-        x_t_minus_05_known = (x_0_known + sigma_x*rand_x_known)%1   #TODO
-        l_t_minus_05_known = C0 * l_0_known + C1 * rand_l_known     #TODO
-        t_t_minus_05_known = C0 * t_0_known + C1 * rand_t_known    #TODO
+        x_t_minus_05_known = (x_0_known + sigma_x*rand_x_known)%1
+        l_t_minus_05_known = C0 * l_0_known + C1 * rand_l_known 
+        t_t_minus_05_known = C0 * t_0_known + C1 * rand_t_known  
 
-        x_t_minus_05 = mask_x.unsqueeze(-1) * x_t_minus_05_known + mask_x_inv.unsqueeze(-1) * x_t_minus_05_unk  #TODO
-        l_t_minus_05 = mask_l.unsqueeze(-1) * l_t_minus_05_known + mask_l_inv.unsqueeze(-1) * l_t_minus_05_unk   #TODO
-        t_t_minus_05 = mask_t.unsqueeze(-1) * t_t_minus_05_known + mask_t_inv.unsqueeze(-1) * t_t_minus_05_unk   #TODO
+        x_t_minus_05 = mask_x.unsqueeze(-1) * x_t_minus_05_known + mask_x_inv.unsqueeze(-1) * x_t_minus_05_unk 
+        l_t_minus_05 = mask_l.unsqueeze(-1) * l_t_minus_05_known + mask_l_inv.unsqueeze(-1) * l_t_minus_05_unk 
+        t_t_minus_05 = mask_t.unsqueeze(-1) * t_t_minus_05_known + mask_t_inv.unsqueeze(-1) * t_t_minus_05_unk 
         
         
 
@@ -339,23 +339,23 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
 
         pred_x = pred_x * torch.sqrt(sigma_norm)
 
-        x_t_minus_1_unk = x_t_minus_05 - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t   #TODO
+        x_t_minus_1_unk = x_t_minus_05 - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t 
 
-        l_t_minus_1_unk = c0 * (l_t_minus_05 - c1 * pred_l) + sigmas * rand_l if not self.keep_lattice else l_t   #TODO
+        l_t_minus_1_unk = c0 * (l_t_minus_05 - c1 * pred_l) + sigmas * rand_l if not self.keep_lattice else l_t 
 
-        t_t_minus_1_unk = c0 * (t_t_minus_05 - c1 * pred_t) + sigmas * rand_t   #TODO
+        t_t_minus_1_unk = c0 * (t_t_minus_05 - c1 * pred_t) + sigmas * rand_t 
 
-        rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)    #TODO
-        rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)    #TODO
-        rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)    #TODO
+        rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T) 
+        rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T) 
+        rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T) 
         
-        x_t_minus_1_known = (x_0_known + sigma_x*rand_x_known)%1    #TODO
-        l_t_minus_1_known = C0 * l_0_known + C1 * rand_l_known     #TODO
-        t_t_minus_1_known = C0 * t_0_known + C1 * rand_t_known   #TODO
+        x_t_minus_1_known = (x_0_known + sigma_x*rand_x_known)%1  
+        l_t_minus_1_known = C0 * l_0_known + C1 * rand_l_known  
+        t_t_minus_1_known = C0 * t_0_known + C1 * rand_t_known 
 
-        x_t_minus_1 = mask_x.unsqueeze(-1) * x_t_minus_1_known + mask_x_inv.unsqueeze(-1) * x_t_minus_1_unk  #TODO
-        l_t_minus_1 = mask_l.unsqueeze(-1) * l_t_minus_1_known + mask_l_inv.unsqueeze(-1) * l_t_minus_1_unk   #TODO
-        t_t_minus_1 = mask_t.unsqueeze(-1) * t_t_minus_1_known + mask_t_inv.unsqueeze(-1) * t_t_minus_1_unk   #TODO
+        x_t_minus_1 = mask_x.unsqueeze(-1) * x_t_minus_1_known + mask_x_inv.unsqueeze(-1) * x_t_minus_1_unk 
+        l_t_minus_1 = mask_l.unsqueeze(-1) * l_t_minus_1_known + mask_l_inv.unsqueeze(-1) * l_t_minus_1_unk 
+        t_t_minus_1 = mask_t.unsqueeze(-1) * t_t_minus_1_known + mask_t_inv.unsqueeze(-1) * t_t_minus_1_unk  
 
         traj[t - 1] = {
             'num_atoms' : batch.num_atoms,
