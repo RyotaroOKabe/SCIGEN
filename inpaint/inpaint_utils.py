@@ -129,19 +129,18 @@ class AL_Template():
         self.type_known = type_known
         self.frac_z = frac_z
         self.device = device
-        self.unit_cell()
+        self.mask_l = torch.tensor([[1,1,0]]) 
 
 
 class AL_Triangular(AL_Template):
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 1
-        self.num_unk = self.num_atom - self.num_known
-        self.frac_known = torch.tensor([[0.0, 0.0, 0.0]])
+        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z]])
         self.a_len = 1 * self.bond_len
         self.c_len = 1 * self.bond_len
         self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
-        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.type_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
 
@@ -149,31 +148,54 @@ class AL_Honeycomb(AL_Template):
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 2
-        self.num_unk = self.num_atom - self.num_known
-        self.frac_known = torch.tensor([[1/3, 2/3, 0.0], [2/3, 1/3, 0.0]])
+        self.frac_known = torch.tensor([[1/3, 2/3, self.frac_z], [2/3, 1/3, self.frac_z]])
         self.a_len = math.sqrt(3) * self.bond_len
         self.c_len = math.sqrt(3) * self.bond_len
         self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
-        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.type_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
 class AL_Kagome(AL_Template):
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 2
-        self.num_unk = self.num_atom - self.num_known
-        self.frac_known = torch.tensor([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0]])
+        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z], [0.5, 0.0, self.frac_z], [0.0, 0.5, self.frac_z]])
         self.a_len = 2 * self.bond_len
         self.c_len = 2 * self.bond_len
         self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
-        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.type_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
-al_dict = {'triangular': AL_Triangular, 'honeycomb': AL_Honeycomb, 'kagome': AL_Kagome}
-num_known_dict = {'triangular': 1, 'honeycomb': 2, 'kagome': 3}
+class AL_Square(AL_Template):
+    def __init__(self, bond_len, num_atom, type_known, frac_z, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, device)
+        self.num_known = 1
+        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z]])
+        self.a_len = 1 * self.bond_len
+        self.c_len = 1 * self.bond_len
+        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
+        self.cell = square_cell(self.a_len, self.c_len, self.device)
+
+class AL_4_8_2_Square(AL_Template):
+    def __init__(self, bond_len, num_atom, type_known, frac_z, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, device)
+        self.num_known = 4
+        x = 1/(2+math.sqrt(2))
+        self.frac_known = torch.tensor([[x, 0.0, self.frac_z],
+                                        [1-x, 0.0, self.frac_z],
+                                        [0.0, x, self.frac_z],
+                                        [0.0, 1-x, self.frac_z]])
+        self.a_len = (1+math.sqrt(2))*self.bond_len
+        self.c_len = 1 * self.bond_len
+        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
+        self.cell = square_cell(self.a_len, self.c_len, self.device)
+
+al_dict = {'triangular': AL_Triangular, 'honeycomb': AL_Honeycomb, 'kagome': AL_Kagome, 'square': AL_Square, '4_8_2_square': AL_4_8_2_Square}
+num_known_dict = {'triangular': 1, 'honeycomb': 2, 'kagome': 3, 'square': 1, '4_8_2_square': 4}
 
 class SampleDataset(Dataset):      
-
     def __init__(self, dataset, total_num, bond_sigma_per_mu, known_species, arch_type, device):
         super().__init__()
         self.total_num = total_num  #!
@@ -182,17 +204,17 @@ class SampleDataset(Dataset):
         self.bond_sigma_per_mu = bond_sigma_per_mu      #!
         self.known_species = known_species      #!
         self.arch_options = arch_type      #!
-        self.device = self.device
+        self.device = device
         # self.frac_coords_archs = {1: torch.tensor([[0.0, 0.0, 0.0]]), 2:torch.tensor([[1/3, 2/3, 0.0], [2/3, 1/3, 0.0]]), 
         #                           3: torch.tensor([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0]])}
-        self.arch_list = random.choice(self.arch_options, self.total_num)
-        self.type_known_list = random.choice(self.known_species, self.total_num)
+        self.arch_list = random.choices(self.arch_options, k=self.total_num)
+        self.type_known_list = random.choices(self.known_species, k=self.total_num)
         self.num_known_list =[num_known_dict[arch] for arch in self.arch_list]
         self.radii_list = [metallic_radius[s] for s in self.type_known_list]
         self.bond_mu_list = [2*r for r in self.radii_list]
         self.bond_sigma_list = [b*self.bond_sigma_per_mu for b in self.bond_mu_list]
         self.bond_len_list = [np.random.normal(self.bond_mu_list[i], self.bond_sigma_list[i]) for i in range(self.total_num)]
-        self.frac_z_known_list = [random.uniform(0, 1) for _ in self.total_num]
+        self.frac_z_known_list = [random.uniform(0, 1) for _ in range(self.total_num)]
         # self.num_known_options = [self.num_known_arch[k] for k in self.arch_type]   #! first sample AL types, then go to AL class
         # self.num_known = np.random.choice(self.num_known_options, self.total_num) #, p = None)      #!
         self.is_carbon = dataset == 'carbon_24' #!
@@ -222,7 +244,7 @@ class SampleDataset(Dataset):
             type_distribution[:n_kn+1] = [0] * (n_kn + 1)
             sum_p = sum(type_distribution)
             type_distribution_norm = [p / sum_p for p in type_distribution] 
-            num_atom = np.random.choice(len(type_distribution_norm), self.total_num, p = type_distribution_norm)
+            num_atom = np.random.choice(len(type_distribution_norm), 1, p = type_distribution_norm)[0]
             self.num_atom_list.append(num_atom)
 
 
@@ -231,7 +253,7 @@ class SampleDataset(Dataset):
 
     def __getitem__(self, index):
         num_atom = np.round(self.num_atom_list[index]).astype(np.int64)
-        num_known_ = self.num_known_list[index]
+        num_known_ = np.round(self.num_known_list[index]).astype(np.int64)
         frac_coords_known_=self.frac_coords_list[index]
         lattice_known_=self.lattice_list[index].unsqueeze(0)
         atom_types_known_=self.atom_types_list[index]
