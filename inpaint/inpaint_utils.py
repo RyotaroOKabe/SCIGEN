@@ -233,6 +233,7 @@ class SampleDataset(Dataset):
             self.mask_x_list.append(material.mask_x)
             self.mask_t_list.append(material.mask_t)
             self.mask_l_list.append(material.mask_l)
+        self.generate_dataset()
    
         
     def get_num_atoms(self):
@@ -247,30 +248,116 @@ class SampleDataset(Dataset):
             num_atom = np.random.choice(len(type_distribution_norm), 1, p = type_distribution_norm)[0]
             self.num_atom_list.append(num_atom)
 
+    def generate_dataset(self):
+        self.data_list = []
+        for index in tqdm(range(self.total_num)):
+            num_atom = np.round(self.num_atom_list[index]).astype(np.int64)
+            num_known_ = np.round(self.num_known_list[index]).astype(np.int64)
+            frac_coords_known_=self.frac_coords_list[index]
+            lattice_known_=self.lattice_list[index].unsqueeze(0)
+            atom_types_known_=self.atom_types_list[index]
+            mask_x_, mask_l_, mask_t_ = [a[index] for a in [self.mask_x_list, self.mask_l_list, self.mask_t_list]]
+            
+            data = Data(
+                num_atoms=torch.LongTensor([num_atom]),
+                num_nodes=num_atom,
+                num_known=num_known_,    
+                frac_coords_known=frac_coords_known_,    
+                lattice_known=lattice_known_,    
+                atom_types_known=atom_types_known_,    
+                mask_x=mask_x_,    
+                mask_l=mask_l_,    
+                mask_t=mask_t_,    
+                
+            )
+            if self.is_carbon:
+                data.atom_types = torch.LongTensor([6] * num_atom)
+            self.data_list.append(data) 
+
 
     def __len__(self):
         return self.total_num
 
     def __getitem__(self, index):
-        num_atom = np.round(self.num_atom_list[index]).astype(np.int64)
-        num_known_ = np.round(self.num_known_list[index]).astype(np.int64)
-        frac_coords_known_=self.frac_coords_list[index]
-        lattice_known_=self.lattice_list[index].unsqueeze(0)
-        atom_types_known_=self.atom_types_list[index]
-        mask_x_, mask_l_, mask_t_ = [a[index] for a in [self.mask_x_list, self.mask_l_list, self.mask_t_list]]
+        return self.data_list[index]
+    
+    
+# class SampleDataset(Dataset):      
+#     def __init__(self, dataset, total_num, bond_sigma_per_mu, known_species, arch_type, device):
+#         super().__init__()
+#         self.total_num = total_num  #!
+#         self.distribution = train_dist[dataset] #! modify to chhange the samplingg range options. 
+#         # self.num_known_arch = {'kagome': 3, 'honeycomb': 2, 'triangular': 1}    
+#         self.bond_sigma_per_mu = bond_sigma_per_mu      #!
+#         self.known_species = known_species      #!
+#         self.arch_options = arch_type      #!
+#         self.device = device
+#         # self.frac_coords_archs = {1: torch.tensor([[0.0, 0.0, 0.0]]), 2:torch.tensor([[1/3, 2/3, 0.0], [2/3, 1/3, 0.0]]), 
+#         #                           3: torch.tensor([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0]])}
+#         self.arch_list = random.choices(self.arch_options, k=self.total_num)
+#         self.type_known_list = random.choices(self.known_species, k=self.total_num)
+#         self.num_known_list =[num_known_dict[arch] for arch in self.arch_list]
+#         self.radii_list = [metallic_radius[s] for s in self.type_known_list]
+#         self.bond_mu_list = [2*r for r in self.radii_list]
+#         self.bond_sigma_list = [b*self.bond_sigma_per_mu for b in self.bond_mu_list]
+#         self.bond_len_list = [np.random.normal(self.bond_mu_list[i], self.bond_sigma_list[i]) for i in range(self.total_num)]
+#         self.frac_z_known_list = [random.uniform(0, 1) for _ in range(self.total_num)]
+#         # self.num_known_options = [self.num_known_arch[k] for k in self.arch_type]   #! first sample AL types, then go to AL class
+#         # self.num_known = np.random.choice(self.num_known_options, self.total_num) #, p = None)      #!
+#         self.is_carbon = dataset == 'carbon_24' #!
+
+#         self.frac_coords_list = []
+#         self.atom_types_list = []
+#         self.lattice_list = []
+#         self.mask_x_list, self.mask_t_list, self.mask_l_list =  [], [], [] 
+#         self.get_num_atoms()
+#         for i, (num_atom, arch, type_known, bond_len, frac_z_known) in enumerate(zip(self.num_atom_list, self.arch_list, self.type_known_list, self.bond_len_list, self.frac_z_known_list)):
+#             al_obj = al_dict[arch]
+#             material = al_obj(bond_len, num_atom, type_known, frac_z_known, self.device)
+#             self.frac_coords_list.append(material.frac_coords)
+#             self.atom_types_list.append(material.atom_types)
+#             self.lattice_list.append(material.cell)
+#             self.mask_x_list.append(material.mask_x)
+#             self.mask_t_list.append(material.mask_t)
+#             self.mask_l_list.append(material.mask_l)
+   
         
-        data = Data(
-            num_atoms=torch.LongTensor([num_atom]),
-            num_nodes=num_atom,
-            num_known=num_known_,    
-            frac_coords_known=frac_coords_known_,    
-            lattice_known=lattice_known_,    
-            atom_types_known=atom_types_known_,    
-            mask_x=mask_x_,    
-            mask_l=mask_l_,    
-            mask_t=mask_t_,    
+#     def get_num_atoms(self):
+#         self.num_atom_list = []
+#         for n_kn in self.num_known_list:
+#             # Make a copy of self.distribution for each key
+#             type_distribution = self.distribution.copy()
+#             # Set the first n elements to 0
+#             type_distribution[:n_kn+1] = [0] * (n_kn + 1)
+#             sum_p = sum(type_distribution)
+#             type_distribution_norm = [p / sum_p for p in type_distribution] 
+#             num_atom = np.random.choice(len(type_distribution_norm), 1, p = type_distribution_norm)[0]
+#             self.num_atom_list.append(num_atom)
+
+
+#     def __len__(self):
+#         return self.total_num
+
+#     def __getitem__(self, index):
+#         num_atom = np.round(self.num_atom_list[index]).astype(np.int64)
+#         num_known_ = np.round(self.num_known_list[index]).astype(np.int64)
+#         frac_coords_known_=self.frac_coords_list[index]
+#         lattice_known_=self.lattice_list[index].unsqueeze(0)
+#         atom_types_known_=self.atom_types_list[index]
+#         mask_x_, mask_l_, mask_t_ = [a[index] for a in [self.mask_x_list, self.mask_l_list, self.mask_t_list]]
+        
+#         data = Data(
+#             num_atoms=torch.LongTensor([num_atom]),
+#             num_nodes=num_atom,
+#             num_known=num_known_,    
+#             frac_coords_known=frac_coords_known_,    
+#             lattice_known=lattice_known_,    
+#             atom_types_known=atom_types_known_,    
+#             mask_x=mask_x_,    
+#             mask_l=mask_l_,    
+#             mask_t=mask_t_,    
             
-        )
-        if self.is_carbon:
-            data.atom_types = torch.LongTensor([6] * num_atom)
-        return data
+#         )
+#         if self.is_carbon:
+#             data.atom_types = torch.LongTensor([6] * num_atom)
+#         return data
