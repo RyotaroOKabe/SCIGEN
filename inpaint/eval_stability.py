@@ -26,6 +26,8 @@ import os, sys
 sys.path.append('../')
 from os.path import join
 import imageio
+from dirs import *
+sys.path.append(ehull_pred_path)
 from inpaint.mat_utils import vis_structure, get_pstruct_list, get_traj_pstruct_list, output_gen, str2pmg, pmg2ase, lattice_params_to_matrix_torch
 from ehull_prediction.utils.data import Dataset_InputStability
 from ehull_prediction.utils.model_class import GraphNetworkClassifier, generate_dataframe
@@ -33,9 +35,6 @@ import warnings
 # from m3gnet.models import Relaxer
 for category in (UserWarning, DeprecationWarning):
     warnings.filterwarnings("ignore", category=category, module="torch")
-    
-from dirs import *
-sys.path.append(ehull_pred_path)
 palette = ['#43AA8B', '#F8961E', '#F94144', '#277DA1']
 sub = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 datasets = ['g', 'y', 'r']
@@ -139,5 +138,6 @@ df_te = generate_dataframe(model, te_loader, loss_fn, scaler, device)
 
 num_stable = (df_te['pred'] == 1).sum()
 print(f"num stable: {num_stable}/{len(df_te)}")
+print('Stable materials: ', list(df_te['mpid']))
 
 # %%
