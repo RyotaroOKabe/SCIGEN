@@ -36,7 +36,6 @@ for category in (UserWarning, DeprecationWarning):
     
 from dirs import *
 sys.path.append(ehull_pred_path)
-from inpaint.inpaint_utils import str2pmg
 palette = ['#43AA8B', '#F8961E', '#F94144', '#277DA1']
 sub = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 datasets = ['g', 'y', 'r']
