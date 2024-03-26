@@ -235,7 +235,7 @@ def get_pstruct_list(num_atoms, frac_coords, atom_types, lattices, atom_type_pro
         if atom_type_prob:
             atom_types_ = torch.argmax(atypes, dim=1) +1
         else: 
-            atom_type_ = atypes
+            atom_types_ = atypes
         # print('atoms: ', atoms.shape)
         # print('cart: ', cart.shape)
         # print('lattice: ', lattice.shape)
