@@ -23,12 +23,10 @@ if torch.cuda.is_available():
 else:
     device = 'cpu'
 import os, sys
+sys.path.append('../')
 from os.path import join
 import imageio
-from inpaint.mat_utils import vis_structure
-from inpaint.mat_utils import get_pstruct_list, get_traj_pstruct_list, output_gen
-# from diffcsp.common.data_utils import lattice_params_to_matrix_torch
-from inpaint.mat_utils import str2pmg, pmg2ase, lattice_params_to_matrix_torch
+from inpaint.mat_utils import vis_structure, get_pstruct_list, get_traj_pstruct_list, output_gen, str2pmg, pmg2ase, lattice_params_to_matrix_torch
 from ehull_prediction.utils.data import Dataset_InputStability
 from ehull_prediction.utils.model_class import GraphNetworkClassifier, generate_dataframe
 import warnings
@@ -37,7 +35,6 @@ for category in (UserWarning, DeprecationWarning):
     warnings.filterwarnings("ignore", category=category, module="torch")
     
 from dirs import *
-sys.path.append('../')
 sys.path.append(ehull_pred_path)
 from inpaint.inpaint_utils import str2pmg
 palette = ['#43AA8B', '#F8961E', '#F94144', '#277DA1']
