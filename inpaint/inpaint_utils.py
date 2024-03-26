@@ -196,10 +196,10 @@ al_dict = {'triangular': AL_Triangular, 'honeycomb': AL_Honeycomb, 'kagome': AL_
 num_known_dict = {'triangular': 1, 'honeycomb': 2, 'kagome': 3, 'square': 1, '4_8_2_square': 4}
 
 class SampleDataset(Dataset):      
-    def __init__(self, dataset, total_num, bond_sigma_per_mu, known_species, arch_type, device):
+    def __init__(self, dataset, max_atom, total_num, bond_sigma_per_mu, known_species, arch_type, device):
         super().__init__()
         self.total_num = total_num  #!
-        self.distribution = train_dist[dataset] #! modify to chhange the samplingg range options. 
+        self.distribution = train_dist[dataset][:max_atom+1] #! modify to chhange the samplingg range options. 
         # self.num_known_arch = {'kagome': 3, 'honeycomb': 2, 'triangular': 1}    
         self.bond_sigma_per_mu = bond_sigma_per_mu      #!
         self.known_species = known_species      #!

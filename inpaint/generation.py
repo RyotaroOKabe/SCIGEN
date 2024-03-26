@@ -89,7 +89,7 @@ def main(args):
 
     print('Evaluate the diffusion model.')
 
-    test_set = SampleDataset(args.dataset, args.batch_size * args.num_batches_to_samples, args.bond_sigma_per_mu, args.known_species, args.arch, device)     
+    test_set = SampleDataset(args.dataset, args.max_atom, args.batch_size * args.num_batches_to_samples, args.bond_sigma_per_mu, args.known_species, args.arch, device)     
     test_loader = DataLoader(test_set, batch_size = args.batch_size)
 
     step_lr = args.step_lr if args.step_lr >= 0 else recommand_step_lr['gen'][args.dataset]
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     # parser.add_argument('--min_sigma', default=0, type=float)
     parser.add_argument('--save_traj', default=False, type=bool)
 
-
+    parser.add_argument('--max_atom', default=20, type=int)
     parser.add_argument('--bond_sigma_per_mu', default=0.1)  
     parser.add_argument('--known_species', default=['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Dy'])  
     parser.add_argument('--arch', default=['kagome']) # 'kagome', 'honeycomb', 'triangular' 
