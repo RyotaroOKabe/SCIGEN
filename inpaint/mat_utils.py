@@ -225,7 +225,7 @@ def output_gen(data_path):
 def get_pstruct_list(num_atoms, frac_coords, atom_types, lattices, atom_type_prob=True):
     pstruct_list = []
     n = len(lattices)
-    for i in range(n):
+    for i in tqdm(range(n)):
         sum_idx_bef = num_atoms[:i].sum()
         sum_idx_aft = num_atoms[:i+1].sum()
         frac = frac_coords[sum_idx_bef:sum_idx_aft, :].to('cpu').to(dtype=torch.float32)
