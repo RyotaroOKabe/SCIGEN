@@ -42,6 +42,7 @@ def diffusion(loader, model, step_lr, save_traj):
     all_frac_coords = []
     all_atom_types = []
     all_lattices = []
+    all_lengths, all_angles = [], []    # ignore if we save traj
     input_data_list = []
     for idx, batch in enumerate(loader):
 

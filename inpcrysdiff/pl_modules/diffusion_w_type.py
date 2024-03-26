@@ -235,7 +235,7 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
     t_0_known = F.one_hot(batch.atom_types_known - 1, num_classes=MAX_ATOMIC_NUM).float()
     mask_l, mask_x, mask_t = batch.mask_l, batch.mask_x, batch.mask_t   #TODO
     mask_x_inv, mask_l_inv, mask_t_inv = 1 - mask_x, 1 - mask_l, 1 - mask_t
-    num_known = torch.LongTensor([batch.num_known]),  #!!
+    num_known = torch.LongTensor([batch.num_known])  #!!
     
     x_T = mask_x.unsqueeze(-1) * x_T_known + mask_x_inv.unsqueeze(-1) * x_T_unk     #TODO
     l_T = mask_l.unsqueeze(-1) * l_T_known + mask_l_inv.unsqueeze(-1) * l_T_unk     #TODO
