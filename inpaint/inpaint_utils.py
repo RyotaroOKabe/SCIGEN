@@ -281,7 +281,3 @@ class SampleDataset(Dataset):
     def __getitem__(self, index):
         return self.data_list[index]
     
-
-def str2pmg(cif):
-    pstruct = Structure.from_str(cif, "CIF")
-    return pstruct

@@ -28,7 +28,7 @@ from os.path import join
 import imageio
 from dirs import *
 sys.path.append(ehull_pred_path)
-from inpaint.mat_utils import vis_structure, get_pstruct_list, get_traj_pstruct_list, output_gen, str2pmg, pmg2ase, lattice_params_to_matrix_torch
+from inpaint.mat_utils import vis_structure, get_pstruct_list, get_traj_pstruct_list, output_gen, str2pmg, pmg2ase, lattice_params_to_matrix_torch, movie_structs
 from ehull_prediction.utils.data import Dataset_InputStability
 from ehull_prediction.utils.model_class import GraphNetworkClassifier, generate_dataframe
 import warnings
@@ -40,7 +40,7 @@ sub = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 datasets = ['g', 'y', 'r']
 colors = dict(zip(datasets, palette))
 cmap = mpl.colors.LinearSegmentedColormap.from_list('cmap', [palette[k] for k in [0,2,1]])
-
+savedir = join(homedir, 'figures')
 
 #%%
 # model setting 
@@ -136,8 +136,23 @@ loss_fn = nn.BCEWithLogitsLoss(reduce=False)
 te_loader = DataLoader(te_set, batch_size = batch_size)
 df_te = generate_dataframe(model, te_loader, loss_fn, scaler, device)
 
+df_stable = df_te[df_te['pred'] == 1]
+id_stable = list(df_stable['id'])
 num_stable = (df_te['pred'] == 1).sum()
 print(f"num stable: {num_stable}/{len(df_te)}")
-print('Stable materials: ', list(df_te['mpid']))
+print('Stable materials: ', id_stable)
+
+#%%
+gen_movie = True
+if gen_movie:
+    traj_pstruct_list = get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, atom_type_prob=False)
+    for _idx in id_stable:
+        idx = int(_idx)
+        print(f"0000_{idx}")
+        structdir = join(savedir, job, use_name, str(idx))
+        print("structdir: ", structdir)
+        movie_structs(traj_pstruct_list[idx], t_interval=10, name=f"0000_{idx}", savedir=structdir, supercell=np.diag([3,3,1]))
+
+
 
 # %%
