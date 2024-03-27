@@ -76,7 +76,10 @@ use_path = join(jobdir, f'eval_{use_name}.pt') #!
 frac_coords, atom_types, lengths, angles, num_atoms, run_time, \
         all_frac_coords, all_atom_types, all_lengths, all_angles = output_gen(use_path)
 lattices = lattice_params_to_matrix_torch(lengths, angles).to(dtype=torch.float32)
-all_lattices = torch.stack([lattice_params_to_matrix_torch(all_lengths[i], all_angles[i]) for i in range(len(all_lengths))])
+get_traj = True if all([len(a)>0 for a in [all_frac_coords, all_atom_types, all_lengths, all_angles]]) else False
+if get_traj:
+    print('We have access to traj data!')
+    all_lattices = torch.stack([lattice_params_to_matrix_torch(all_lengths[i], all_angles[i]) for i in range(len(all_lengths))])
 num = len(lattices)
 print("jobdir: ", jobdir)
 
@@ -145,7 +148,8 @@ print('Stable materials: ', id_stable)
 #%%
 gen_movie = True
 if gen_movie:
-    traj_pstruct_list = get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, atom_type_prob=False)
+    if get_traj:
+        traj_pstruct_list = get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, atom_type_prob=False)
     # for _idx in id_stable:
     for _idx in range(num):
         idx = format(_idx, '05')

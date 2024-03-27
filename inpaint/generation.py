@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
     # parser.add_argument('--n_step_each', default=100, type=int) #?
     # parser.add_argument('--min_sigma', default=0, type=float)
-    parser.add_argument('--save_traj', default=False, type=bool)
+    parser.add_argument('--save_traj', default=True, type=bool)
 
     parser.add_argument('--max_atom', default=20, type=int)
     parser.add_argument('--bond_sigma_per_mu', default=0.1)  
