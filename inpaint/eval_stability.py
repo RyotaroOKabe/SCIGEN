@@ -44,7 +44,7 @@ savedir = join(homedir, 'figures')
 
 #%%
 # model setting 
-model_name = '240325-200817'      # pre-trained model. Rename if you want to use the model you trained in the tabs above. 
+model_name = ehull_pred_name      # pre-trained model. Rename if you want to use the model you trained in the tabs above. 
 r_max = 4.
 tr_ratio = 0.0
 batch_size = 16
@@ -67,7 +67,7 @@ irreps_out = f'{out_dim}x0e'
 #%%
 job = job_folder # "2023-06-10/mp_20_2"   #!
 task = 'gen'
-label ='demo8.3'
+label = out_name
 add = None if label is None else '_' + label
 jobdir = join(hydradir, job)
 use_name = task + add
