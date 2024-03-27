@@ -149,18 +149,21 @@ if gen_movie:
     # for _idx in id_stable:
     for _idx in range(num):
         idx = format(_idx, '05')
-        unstable_dir = join(savedir, job, use_name, str(idx))
+        unstable_dir = join(savedir, job, use_name, 'unstable')
         try:
             # idx = int(_idx)
             print(f"0000_{_idx}")
             if idx in id_stable:
-                structdir = join(savedir, job, use_name, 'unstable')
-                print("structdir: ", structdir)
+                print(f'[Stable material!!] {idx}')
+                structdir = join(savedir, job, use_name, str(idx))
                 movie_structs(traj_pstruct_list[idx], t_interval=10, name=f"0000_{idx}", savedir=structdir, supercell=np.diag([3,3,1]))
+                print("Succeed in saving movie of stable structure in: ", structdir)
             else: 
+                print(f'[Unstable...] {idx}')
                 pstruct = pstruct_list[_idx]
-                vis_structure(pstruct, supercell=np.diag([1,1,1]), title=idx, savedir=unstable_dir)
+                vis_structure(pstruct, supercell=np.diag([3,3,1]), title=idx, savedir=unstable_dir)
         except: 
+            print(f'Got an error when generating material ({idx})')
             
 
 
