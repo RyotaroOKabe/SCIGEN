@@ -146,13 +146,22 @@ print('Stable materials: ', id_stable)
 gen_movie = True
 if gen_movie:
     traj_pstruct_list = get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, atom_type_prob=False)
-    for _idx in id_stable:
-        idx = int(_idx)
-        print(f"0000_{idx}")
-        structdir = join(savedir, job, use_name, str(idx))
-        print("structdir: ", structdir)
-        movie_structs(traj_pstruct_list[idx], t_interval=10, name=f"0000_{idx}", savedir=structdir, supercell=np.diag([3,3,1]))
-
+    # for _idx in id_stable:
+    for _idx in range(num):
+        idx = format(_idx, '05')
+        unstable_dir = join(savedir, job, use_name, str(idx))
+        try:
+            # idx = int(_idx)
+            print(f"0000_{_idx}")
+            if idx in id_stable:
+                structdir = join(savedir, job, use_name, 'unstable')
+                print("structdir: ", structdir)
+                movie_structs(traj_pstruct_list[idx], t_interval=10, name=f"0000_{idx}", savedir=structdir, supercell=np.diag([3,3,1]))
+            else: 
+                pstruct = pstruct_list[_idx]
+                vis_structure(pstruct, supercell=np.diag([1,1,1]), title=idx, savedir=unstable_dir)
+        except: 
+            
 
 
 # %%
