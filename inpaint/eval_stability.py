@@ -127,7 +127,7 @@ model = GraphNetworkClassifier(mul,
                      node_embed_dim,
                      input_dim,
                      input_embed_dim)
-model_file = f'./ehull_prediction/models/{model_name}.torch'
+model_file = join(ehull_pred_path, 'models', model_name + '.torch') #!
 # model = torch.load(model_file)
 model.load_state_dict(torch.load(model_file)['state'])
 model = model.to(device)
