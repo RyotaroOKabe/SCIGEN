@@ -29,8 +29,7 @@ from os.path import join
 import imageio
 from dirs import *
 sys.path.append(ehull_pred_path)
-from inpaint.mat_utils import vis_structure, get_pstruct_list, get_traj_pstruct_list, output_gen, str2pmg, pmg2ase, lattice_params_to_matrix_torch, movie_structs
-from inpaint_utils import convert_seconds_short
+from inpaint.mat_utils import vis_structure, get_pstruct_list, get_traj_pstruct_list, output_gen, str2pmg, pmg2ase, lattice_params_to_matrix_torch, movie_structs, convert_seconds_short
 from ehull_prediction.utils.data import Dataset_InputStability
 from ehull_prediction.utils.model_class import GraphNetworkClassifier, generate_dataframe
 import warnings
@@ -65,6 +64,7 @@ input_dim = 118
 input_embed_dim = 32
 out_dim = 64
 irreps_out = f'{out_dim}x0e'
+loss_fn = nn.BCEWithLogitsLoss(reduce=False) 
 
 #%%
 job = job_folder # "2023-06-10/mp_20_2"   #!
@@ -87,13 +87,13 @@ print("jobdir: ", jobdir)
 
 #%%
 #[1] load structure
+print(f'[1] Load structure data')
 start_time1 = time.time()
 pstruct_list = get_pstruct_list(num_atoms, frac_coords, atom_types, lattices, atom_type_prob=True)
 # traj_pstruct_list = get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, atom_type_prob=False)
 astruct_list = [Atoms(AseAtomsAdaptor().get_atoms(pstruct)) for pstruct in pstruct_list]
 run_time1 = time.time() - start_time1
 total_num = len(astruct_list)
-print(f'[1] Load structure data')
 print(f'Total outputs:{total_num} materials')
 print(f'run time: {run_time1} sec = {convert_seconds_short(run_time1)}')
 print(f'{run_time1/total_num} sec/material')
@@ -141,7 +141,7 @@ model = model.to(device)
 model = model.eval()  # Set to evaluation mode if using for inference
 #%%
 # Generate Data Loader
-loss_fn = nn.BCEWithLogitsLoss(reduce=False) 
+print(f'[2] Stability classification')
 start_time2 = time.time()
 te_loader = DataLoader(te_set, batch_size = batch_size)
 df_te = generate_dataframe(model, te_loader, loss_fn, scaler, device)
@@ -151,7 +151,6 @@ id_stable = list(df_stable['id'])
 num_stable = (df_te['pred'] == 1).sum()
 
 run_time2 = time.time() - start_time2
-print(f'[2] Stability classification')
 print(f'Total outputs:{total_num} materials')
 print(f'run time: {run_time2} sec = {convert_seconds_short(run_time2)}')
 print(f'{run_time2/total_num} sec/material')
@@ -163,6 +162,7 @@ print('Stable materials: ', id_stable)
 #%%
 gen_movie = False
 if gen_movie:
+    print(f'[3] Generate images and gifs')
     start_time3 = time.time()
     if get_traj:
         traj_pstruct_list = get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, atom_type_prob=False)
@@ -187,7 +187,6 @@ if gen_movie:
             print(f'Got an error when generating material ({idx})', e)
     
     run_time3 = time.time() - start_time3
-    print(f'[3] Generate images and gifs')
     print(f'Total outputs:{total_num} materials')
     print(f'run time: {run_time3} sec = {convert_seconds_short(run_time3)}')
     print(f'{run_time3/total_num} sec/material')
