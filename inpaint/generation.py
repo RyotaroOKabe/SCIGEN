@@ -105,6 +105,7 @@ def main(args):
 
     run_time = time.time() - start_time
     total_num = args.batch_size * args.num_batches_to_samples
+    print('args: ', args)
     print(f'Total outputs: {args.num_batches_to_samples} samples x {args.batch_size} batches = {total_num} materials')
     print(f'run time: {run_time} sec = {convert_seconds_short(run_time)}')
     print(f'{run_time/args.num_batches_to_samples} sec/sample')

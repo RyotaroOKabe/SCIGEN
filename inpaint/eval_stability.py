@@ -151,23 +151,24 @@ if gen_movie:
     if get_traj:
         traj_pstruct_list = get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, atom_type_prob=False)
     # for _idx in id_stable:
-    for _idx in range(num):
-        idx = format(_idx, '05')
+    for i in range(num):
+        idx = format(i, '05')
         unstable_dir = join(savedir, job, use_name, 'unstable')
+        gif_name = f"0000_{i}"
         try:
             # idx = int(_idx)
-            print(f"0000_{_idx}")
+            print(gif_name)
             if idx in id_stable:
                 print(f'[Stable material!!] {idx}')
-                structdir = join(savedir, job, use_name, str(idx))
-                movie_structs(traj_pstruct_list[idx], t_interval=10, name=f"0000_{idx}", savedir=structdir, supercell=np.diag([3,3,1]))
+                structdir = join(savedir, job, use_name, idx)
+                movie_structs(traj_pstruct_list[i], t_interval=10, name=gif_name, savedir=structdir, supercell=np.diag([3,3,1]))
                 print("Succeed in saving movie of stable structure in: ", structdir)
             else: 
                 print(f'[Unstable...] {idx}')
-                pstruct = pstruct_list[_idx]
+                pstruct = pstruct_list[i]
                 vis_structure(pstruct, supercell=np.diag([3,3,1]), title=idx, savedir=unstable_dir)
-        except: 
-            print(f'Got an error when generating material ({idx})')
+        except Exception as e:
+            print(f'Got an error when generating material ({idx})', e)
             
 
 
