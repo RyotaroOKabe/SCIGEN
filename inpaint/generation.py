@@ -143,7 +143,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_traj', default=True, type=bool)
 
     parser.add_argument('--max_atom', default=20, type=int)
-    parser.add_argument('--bond_sigma_per_mu', default=0.1)  
+    parser.add_argument('--bond_sigma_per_mu', default=None)  
     parser.add_argument('--known_species', default=['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Dy'])  
     parser.add_argument('--arch', default=['kagome']) # 'kagome', 'honeycomb', 'triangular' 
     

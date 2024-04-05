@@ -54,7 +54,31 @@ cmap = mpl.colors.LinearSegmentedColormap.from_list('cmap', palette)
 # cmap = mpl.colors.LinearSegmentedColormap.from_list('cmap', [palette[k] for k in [0,2,1]])
 from pymatgen.core.structure import Structure
 
-
+chemical_symbols = [
+    # 0
+    'X',
+    # 1
+    'H', 'He',
+    # 2
+    'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
+    # 3
+    'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
+    # 4
+    'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
+    'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr',
+    # 5
+    'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd',
+    'In', 'Sn', 'Sb', 'Te', 'I', 'Xe',
+    # 6
+    'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
+    'Ho', 'Er', 'Tm', 'Yb', 'Lu',
+    'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi',
+    'Po', 'At', 'Rn',
+    # 7
+    'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk',
+    'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr',
+    'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc',
+    'Lv', 'Ts', 'Og']
 
 def vis_structure(struct_in, ax=None, supercell=np.diag([1,1,1]), title=None, rot='5x,5y,90z', savedir=None, palette=palette):
     if type(struct_in)==Structure:
@@ -92,6 +116,8 @@ def vis_structure(struct_in, ax=None, supercell=np.diag([1,1,1]), title=None, ro
         fig.savefig(f'{path}/{fname}.png')
     if ax is not None:
         return ax
+    plt.show()
+    plt.close()
 
 
 def movie_structs(astruct_list, name, t_interval=1, savedir=None, supercell=np.diag([1,1,1])):
@@ -123,10 +149,10 @@ def pmg2ase(pstruct):
                     cell = pstruct.lattice.matrix.copy(), 
                     pbc=True)
 
-def asepmg(astruct):
+def ase2pmg(astruct):
     lattice = Lattice(astruct.cell)  # Convert the cell to a Pymatgen Lattice
     species = astruct.get_chemical_symbols()  # Get the list of element symbols
-    positions = astruct.get_positions()  # Get the atomic positions
+    positions = astruct.get_scaled_positions()  # Get the atomic positions
     pstruct = Structure(lattice, species, positions)
     return pstruct
 

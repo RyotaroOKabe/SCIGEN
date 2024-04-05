@@ -21,6 +21,7 @@ import math
 import random   
 from sample import chemical_symbols
 from p_tqdm import p_map
+import pickle as pkl
 
 import pdb
 
@@ -80,6 +81,8 @@ train_dist = {
 
 # metallic radius reference (tempolary): https://en.wikipedia.org/wiki/Atomic_radii_of_the_elements_(data_page)#Note_b
 metallic_radius = {'Mn': 1.27, 'Fe': 1.26, 'Co': 1.25, 'Ni': 1.24, 'Ru': 1.34, 'Nd': 1.814, 'Gd': 1.804, 'Dy': 1.781}
+with open('./data/kde_bond.pkl', 'rb') as file:
+    kde_dict = pkl.load(file)
 
 lattice_types = {'kagome': 'hexagonal', 'honeycomb': 'hexagonal', 'triangular': 'hexagonal'}
 
@@ -210,10 +213,15 @@ class SampleDataset(Dataset):
         self.arch_list = random.choices(self.arch_options, k=self.total_num)
         self.type_known_list = random.choices(self.known_species, k=self.total_num)
         self.num_known_list =[num_known_dict[arch] for arch in self.arch_list]
-        self.radii_list = [metallic_radius[s] for s in self.type_known_list]
-        self.bond_mu_list = [2*r for r in self.radii_list]
-        self.bond_sigma_list = [b*self.bond_sigma_per_mu for b in self.bond_mu_list]
-        self.bond_len_list = [np.random.normal(self.bond_mu_list[i], self.bond_sigma_list[i]) for i in range(self.total_num)]
+        if self.bond_sigma_per_mu is not None:  #!
+            print('Sample bond length from Gaussian')
+            self.radii_list = [metallic_radius[s] for s in self.type_known_list]
+            self.bond_mu_list = [2*r for r in self.radii_list]
+            self.bond_sigma_list = [b*self.bond_sigma_per_mu for b in self.bond_mu_list]
+            self.bond_len_list = [np.random.normal(self.bond_mu_list[i], self.bond_sigma_list[i]) for i in range(self.total_num)]
+        else:
+            print('Sample bond length from KDE')
+            self.bond_len_list = [kde_dict[s].resample(1).item() for s in self.type_known_list]
         self.frac_z_known_list = [random.uniform(0, 1) for _ in range(self.total_num)]
         # self.num_known_options = [self.num_known_arch[k] for k in self.arch_type]   #! first sample AL types, then go to AL class
         # self.num_known = np.random.choice(self.num_known_options, self.total_num) #, p = None)      #!

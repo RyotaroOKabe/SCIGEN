@@ -106,6 +106,8 @@ print(f'{run_time1/total_num} sec/material')
 # vis_structure(astruct, supercell=np.diag([1,1,1]), title='astruct')
 
 #%%
+print(f'[1.1] Generate dataset')
+start_time1 = time.time()
 new_rows = []  # To collect new rows
 for i, astruct in enumerate(astruct_list):
     row1 = {}  # Initialize the dictionary here
@@ -121,6 +123,11 @@ dataset = Dataset_InputStability(mpdata, r_max, target, descriptor, scaler)  # d
 num = len(dataset)
 idx_te = range(num)
 te_set = torch.utils.data.Subset(dataset, idx_te)
+run_time1 = time.time() - start_time1
+total_num = len(astruct_list)
+print(f'Total outputs:{total_num} materials')
+print(f'run time: {run_time1} sec = {convert_seconds_short(run_time1)}')
+print(f'{run_time1/total_num} sec/material')
 
 #%%
 model = GraphNetworkClassifier(mul,
