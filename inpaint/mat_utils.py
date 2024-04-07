@@ -16,10 +16,12 @@ from ase import Atoms
 from ase.visualize.plot import plot_atoms
 from ase.build import make_supercell
 from pymatgen.core import Structure, Lattice
+from pymatgen.analysis.local_env import CrystalNN
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from copy import copy
 import imageio
+import math
 
 # utilities
 from tqdm import tqdm
@@ -294,3 +296,146 @@ def get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattic
             pstruct_list.append(pstruct)
         pstruct_lists.append(pstruct_list)
     return pstruct_lists
+
+
+
+
+def structures_to_cif_string(structures):
+    """
+    Concatenates multiple Structure objects into a single CIF string.
+
+    Args:
+    - structures (list): A list of pymatgen.core.structure.Structure objects.
+
+    Returns:
+    - str: A single string in CIF format containing all structures.
+    """
+    cif_strings = []
+
+    for i, struct in enumerate(structures):
+        # Get the CIF string for the structure
+        cif_str = struct.to(fmt="cif")
+        # Optionally, you can add a comment before each structure for clarity
+        cif_strings.append(f"# Structure {i}\n{cif_str}")
+
+    # Join all CIF strings into a single string, separated by newlines
+    combined_cif_str = "\n".join(cif_strings)
+    return combined_cif_str
+
+def save_combined_cif(structures, output_file_path):
+    """
+    Saves multiple Structure objects to a single CIF file.
+
+    Args:
+    - structures (list): A list of pymatgen.core.structure.Structure objects.
+    - output_file_path (str): The file path where the combined CIF data will be saved.
+    """
+    # Use the function defined earlier to get the combined CIF string
+    combined_cif_str = structures_to_cif_string(structures)
+
+    # Write the combined CIF string to the specified file
+    with open(output_file_path, 'w') as file:
+        file.write(combined_cif_str)
+    print(f"Combined CIF file saved to: {output_file_path}")
+
+import glob
+from ase.io import read
+
+def load_cif_files_from_folder(folder_path):
+    """
+    Load all CIF files in the specified folder as a list of ase.Atoms objects.
+
+    Args:
+    - folder_path (str): Path to the folder containing CIF files.
+
+    Returns:
+    - List[ase.Atoms]: A list of ase.Atoms objects loaded from the CIF files.
+    """
+    # Construct the pattern to match all CIF files in the folder
+    cif_pattern = os.path.join(folder_path, '*.cif')
+    
+    # Find all files matching the pattern
+    cif_files = sorted(glob.glob(cif_pattern))
+    # print(cif_files)
+    
+    atoms_list = []
+    for i, cif_file in enumerate(cif_files):
+        # print(cif_file)
+        try:
+            # Load each CIF file as an ase.Atoms object
+            # atoms_list = [read(cif_file) for cif_file in cif_files]
+            atoms_list.append(read(cif_file))
+        except Exception as error:
+            print(f"Failed to process {cif_file}: {error}")
+    return atoms_list
+
+
+def convert_seconds_short(sec):
+    minutes, seconds = divmod(int(sec), 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    return f"{days:02d}:{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+def nearest_neighbor_list(a, weight_cn = True, self_intraction = False):
+    cnn = CrystalNN(weighted_cn=weight_cn)
+    if isinstance(a, Structure):
+        pstruct = a 
+    elif isinstance(a, Atoms):
+        pstruct = ase2pmg(a)
+    pcell = np.array(pstruct.lattice.matrix)
+    species = [str(s) for s in pstruct.species]
+    cart, frac = pstruct.cart_coords, pstruct.frac_coords
+    count = 0
+    cnn_edge_src, cnn_edge_dst, cnn_edge_shift, cnn_edge_vec, cnn_edge_len = [], [], [], [], []
+    cnn_elem_src, cnn_elem_dst = [], []
+    for i, site in enumerate(pstruct):
+        nn_info = cnn.get_nn_info(pstruct, i)
+        for nn_ in nn_info:
+            j = nn_['site_index']
+            i_elem, j_elem = species[i], species[j]
+            jimage = nn_['image']
+            cart_shift = np.einsum('ij, i->j', pcell, jimage)
+            e_vec = cart[j] - cart[i] + cart_shift
+            e_len = np.linalg.norm(e_vec)
+            cnn_edge_src.append(i)
+            cnn_edge_dst.append(j)
+            cnn_edge_shift.append(jimage)
+            cnn_edge_vec.append(e_vec)
+            cnn_edge_len.append(e_len)
+            cnn_elem_src.append(i_elem)
+            cnn_elem_dst.append(j_elem)
+            # print(f"[{i}] Distance to neighbor {nn_['site'].species_string} (index: {j}, image: {jimage}): {nn_['weight']} Å")
+            # print(f"{[i, j]} edge vec", e_vec)
+            # print(f"{[i, j]} edge len", e_len)
+            count +=  1
+    try:
+        cnn_edge_src, cnn_edge_dst, cnn_edge_len = [np.array(a) for a in [cnn_edge_src, cnn_edge_dst, cnn_edge_len]]
+        cnn_edge_shift, cnn_edge_vec = [np.stack(a) for a in [cnn_edge_shift, cnn_edge_vec]]
+        return cnn_edge_src, cnn_edge_dst, cnn_edge_shift, cnn_edge_vec, cnn_edge_len
+    except:
+        print('Skip: ', pstruct.formula)
+        return cnn_edge_src, cnn_edge_dst, cnn_edge_shift, cnn_edge_vec, cnn_edge_len
+
+
+rad_missing_elems = {'He': 0.46, 'Ne': 0.67, 'Kr': 1.17, 'Xe': 1.3, 
+                     'Rn': 1.42, 'Bk': 1.70, 'Cm': 1.66, 'At': 1.47, 'Fm': 1.66, 'Fr': 3.48}
+def atom_volume_pm(element_symbol):
+    element = Element(element_symbol)
+    radius = element.atomic_radius  # This is in angstroms
+    if radius is None:
+        if element_symbol in rad_missing_elems.keys():
+            radius = rad_missing_elems[element_symbol]
+        else:
+            raise ValueError(f"Atomic radius for {element_symbol} not available.")
+    
+    volume = (4/3) * math.pi * (radius ** 3)
+    return volume
+
+def vol_density(pstruct):
+    lattice = pstruct.lattice
+    lvol = lattice.volume
+    species = [str(s) for s in pstruct.species]
+    atoms_volume = 0
+    for s in species:
+        atoms_volume += atom_volume_pm(s)
+    return atoms_volume/lvol
