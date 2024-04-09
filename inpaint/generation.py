@@ -144,7 +144,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--max_atom', default=20, type=int)
     parser.add_argument('--bond_sigma_per_mu', default=None)  
-    parser.add_argument('--known_species', default=['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Dy', 'Tb', 'Yb'])  
+    parser.add_argument('--known_species', default=['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb'])  
     parser.add_argument('--arch', default=['kagome']) # 'kagome', 'honeycomb', 'triangular' 
     
     args = parser.parse_args()

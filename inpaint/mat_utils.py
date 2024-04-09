@@ -9,6 +9,7 @@ import pandas as pd
 from tqdm import tqdm
 import pickle as pkl
 from ase import Atoms
+from ase.data import atomic_numbers, atomic_names, atomic_masses, covalent_radii
 from copy import copy
 bar_format = '{l_bar}{bar:10}{r_bar}{bar:-10b}'
 api_key = "PvfnzQv5PLh4Lzxz1pScKnAtcmmWVaeU"
@@ -16,12 +17,11 @@ from ase import Atoms
 from ase.visualize.plot import plot_atoms
 from ase.build import make_supercell
 from pymatgen.core import Structure, Lattice
-from pymatgen.analysis.local_env import CrystalNN
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import math
 from copy import copy
 import imageio
-import math
 
 # utilities
 from tqdm import tqdm
@@ -55,6 +55,8 @@ colors2 = dict(zip(datasets2, palette[:-1]))
 cmap = mpl.colors.LinearSegmentedColormap.from_list('cmap', palette)
 # cmap = mpl.colors.LinearSegmentedColormap.from_list('cmap', [palette[k] for k in [0,2,1]])
 from pymatgen.core.structure import Structure
+from pymatgen.core.periodic_table import Element
+# import mendeleev as md 
 
 chemical_symbols = [
     # 0
@@ -81,6 +83,7 @@ chemical_symbols = [
     'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr',
     'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc',
     'Lv', 'Ts', 'Og']
+
 
 def vis_structure(struct_in, ax=None, supercell=np.diag([1,1,1]), title=None, rot='5x,5y,90z', savedir=None, palette=palette):
     if type(struct_in)==Structure:
@@ -118,8 +121,6 @@ def vis_structure(struct_in, ax=None, supercell=np.diag([1,1,1]), title=None, ro
         fig.savefig(f'{path}/{fname}.png')
     if ax is not None:
         return ax
-    plt.show()
-    plt.close()
 
 
 def movie_structs(astruct_list, name, t_interval=1, savedir=None, supercell=np.diag([1,1,1])):
@@ -299,7 +300,6 @@ def get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattic
 
 
 
-
 def structures_to_cif_string(structures):
     """
     Concatenates multiple Structure objects into a single CIF string.
@@ -376,6 +376,8 @@ def convert_seconds_short(sec):
     days, hours = divmod(hours, 24)
     return f"{days:02d}:{hours:02d}:{minutes:02d}:{seconds:02d}"
 
+
+from pymatgen.analysis.local_env import CrystalNN
 def nearest_neighbor_list(a, weight_cn = True, self_intraction = False):
     cnn = CrystalNN(weighted_cn=weight_cn)
     if isinstance(a, Structure):
@@ -417,25 +419,16 @@ def nearest_neighbor_list(a, weight_cn = True, self_intraction = False):
         return cnn_edge_src, cnn_edge_dst, cnn_edge_shift, cnn_edge_vec, cnn_edge_len
 
 
-rad_missing_elems = {'He': 0.46, 'Ne': 0.67, 'Kr': 1.17, 'Xe': 1.3, 
-                     'Rn': 1.42, 'Bk': 1.70, 'Cm': 1.66, 'At': 1.47, 'Fm': 1.66, 'Fr': 3.48}
-def atom_volume_pm(element_symbol):
-    element = Element(element_symbol)
-    radius = element.atomic_radius  # This is in angstroms
-    if radius is None:
-        if element_symbol in rad_missing_elems.keys():
-            radius = rad_missing_elems[element_symbol]
-        else:
-            raise ValueError(f"Atomic radius for {element_symbol} not available.")
-    
+def atom_volume(element_symbol):
+    elem_no = chemical_symbols.index(element_symbol)
+    radius = covalent_radii[elem_no]  # This is in angstroms  
     volume = (4/3) * math.pi * (radius ** 3)
     return volume
 
-def vol_density(pstruct):
-    lattice = pstruct.lattice
-    lvol = lattice.volume
-    species = [str(s) for s in pstruct.species]
+def vol_density(astruct):
+    lvol = astruct.cell.volume
+    species = astruct.get_chemical_symbols()
     atoms_volume = 0
     for s in species:
-        atoms_volume += atom_volume_pm(s)
+        atoms_volume += atom_volume(s)
     return atoms_volume/lvol

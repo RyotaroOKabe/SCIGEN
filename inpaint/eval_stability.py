@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import csv
 import time
 import pandas as pd
+from dirs import *
+sys.path.append(ehull_pred_path)
 from pymatgen.core.structure import Structure
 from pymatgen.core.lattice import Lattice
 from pymatgen.analysis.graphs import StructureGraph
@@ -27,9 +29,7 @@ import os, sys
 sys.path.append('../')
 from os.path import join
 import imageio
-from dirs import *
-sys.path.append(ehull_pred_path)
-from inpaint.mat_utils import vis_structure, get_pstruct_list, get_traj_pstruct_list, output_gen, str2pmg, pmg2ase, lattice_params_to_matrix_torch, movie_structs, convert_seconds_short
+from inpaint.mat_utils import vis_structure, get_pstruct_list, get_traj_pstruct_list, output_gen, str2pmg, pmg2ase, ase2pmg, lattice_params_to_matrix_torch, movie_structs, convert_seconds_short, chemical_symbols, vol_density
 from ehull_prediction.utils.data import Dataset_InputStability
 from ehull_prediction.utils.model_class import GraphNetworkClassifier, generate_dataframe
 import warnings
@@ -46,9 +46,11 @@ savedir = join(homedir, 'figures')
 #%%
 # model setting 
 model_name = ehull_pred_name      # pre-trained model. Rename if you want to use the model you trained in the tabs above. 
+model_name2 = ehull_pred_name2
 r_max = 4.
 tr_ratio = 0.0
 batch_size = 16
+nearest_neighbor = False
 scaler = None #LogShiftScaler(epsilon, mu, sigma)
 target = 'ehull'    # ['ehull', 'f_energy']
 descriptor = 'ie'   # ['mass', 'number', 'radius', 'en', 'ie', 'dp', 'non']
@@ -83,11 +85,11 @@ if get_traj:
     print('We have access to traj data!')
     all_lattices = torch.stack([lattice_params_to_matrix_torch(all_lengths[i], all_angles[i]) for i in range(len(all_lengths))])
 num = len(lattices)
-print("jobdir: ", jobdir)
+print("use_path: ", use_path)
 
 #%%
 #[1] load structure
-print(f'[1] Load structure data')
+print(f'[1.1] Load structure data')
 start_time1 = time.time()
 pstruct_list = get_pstruct_list(num_atoms, frac_coords, atom_types, lattices, atom_type_prob=True)
 # traj_pstruct_list = get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, atom_type_prob=False)
@@ -106,7 +108,7 @@ print(f'{run_time1/total_num} sec/material')
 # vis_structure(astruct, supercell=np.diag([1,1,1]), title='astruct')
 
 #%%
-print(f'[1.1] Generate dataset')
+print(f'[1.2] Generate initial dataset')
 start_time1 = time.time()
 new_rows = []  # To collect new rows
 for i, astruct in enumerate(astruct_list):
@@ -118,8 +120,15 @@ for i, astruct in enumerate(astruct_list):
     row1['stable'] = 1
     new_rows.append(row1)
 
-mpdata = pd.DataFrame(new_rows).reset_index(drop=True)
-dataset = Dataset_InputStability(mpdata, r_max, target, descriptor, scaler)  # dataset
+# del astruct_list, frac_coords, atom_types, lattices, lengths, angles, all_lengths, all_angles
+
+mpdata = pd.DataFrame(new_rows).reset_index(drop=True)    #!
+mpdata['occupy_ratio'] = mpdata['structure'].map(vol_density)
+mpdata = mpdata[mpdata['occupy_ratio']<2].reset_index(drop=True)
+print(f'Filter materials by space occupation ratio: {len(mpdata)}/{num}')
+# mpdata_file = join('./ehull_prediction/data/mpdata_mp20_test.pkl')  #!
+# mpdata = pd.read_pickle(mpdata_file)    #!
+dataset = Dataset_InputStability(mpdata, r_max, target, descriptor, scaler, nearest_neighbor)  # dataset
 num = len(dataset)
 idx_te = range(num)
 te_set = torch.utils.data.Subset(dataset, idx_te)
@@ -130,6 +139,7 @@ print(f'run time: {run_time1} sec = {convert_seconds_short(run_time1)}')
 print(f'{run_time1/total_num} sec/material')
 
 #%%
+print(f'[2.0] Load GNN models')
 model = GraphNetworkClassifier(mul,
                      irreps_out,
                      lmax,
@@ -146,11 +156,29 @@ model_file = join(ehull_pred_path, 'models', model_name + '.torch') #!
 model.load_state_dict(torch.load(model_file)['state'])
 model = model.to(device)
 model = model.eval()  # Set to evaluation mode if using for inference
+
+model2 = GraphNetworkClassifier(mul,
+                     irreps_out,
+                     lmax,
+                     nlayers,
+                     number_of_basis,
+                     radial_layers,
+                     radial_neurons,
+                     node_dim,
+                     node_embed_dim,
+                     input_dim,
+                     input_embed_dim)
+model_file2 = join(ehull_pred_path, 'models', model_name2 + '.torch') #!
+# model = torch.load(model_file)
+model2.load_state_dict(torch.load(model_file2)['state'])
+model2 = model2.to(device)
+model2 = model2.eval()  # Set to evaluation mode if using for inference
 #%%
 # Generate Data Loader
-print(f'[2] Stability classification')
+print(f'[2.1] Stability classification (1)')
 start_time2 = time.time()
 te_loader = DataLoader(te_set, batch_size = batch_size)
+# Evaluate with GNN classifier
 df_te = generate_dataframe(model, te_loader, loss_fn, scaler, device)
 
 df_stable = df_te[df_te['pred'] == 1]
@@ -164,6 +192,53 @@ print(f'{run_time2/total_num} sec/material')
 
 print(f"num stable: {num_stable}/{len(df_te)}")
 print('Stable materials: ', id_stable)
+
+#%%
+# Generate Data Loader
+print(f'[2.2] Stability classification (2)')
+start_time2 = time.time()
+mpdata2 = mpdata[mpdata['mpid'].isin(id_stable)].reset_index(drop=True) # Evaluate onlyt the down-sampled materials by the early GNN model. 
+dataset2 = Dataset_InputStability(mpdata2, r_max, target, descriptor, scaler, nearest_neighbor)
+num2 = len(dataset2)
+idx_te2 = range(num2)
+te_set2 = torch.utils.data.Subset(dataset2, idx_te2)
+te_loader2 = DataLoader(te_set2, batch_size = batch_size)
+# Evaluate with GNN classifier
+df_te2 = generate_dataframe(model2, te_loader2, loss_fn, scaler, device)
+df_stable2 = df_te2[df_te2['pred'] == 1]
+id_stable2 = list(df_stable2['id'])
+num_stable2 = (df_te2['pred'] == 1).sum()
+run_time2 = time.time() - start_time2
+print(f'Total outputs:{len(df_te2)} materials')
+print(f'run time: {run_time2} sec = {convert_seconds_short(run_time2)}')
+print(f'{run_time2/total_num} sec/material')
+print(f"num stable: {num_stable2}/{len(df_te2)}")
+print('Stable materials: ', id_stable2)
+
+#%%
+gen_cif = True
+if gen_cif:
+    cif_dir= join(jobdir, use_name + '_filtered')
+    os.system(f'rm -r {cif_dir}')
+    os.makedirs(cif_dir)
+    # pstruct_list_filtered = [pstruct_list[int(idx)] for idx in id_stable2]
+    # for i, struct in enumerate(pstruct_list_filtered):
+    for idx in id_stable2:
+        struct = pstruct_list[int(idx)]
+        try: 
+            # Construct a filename for each structure
+            # filename = f"{format(i, '05')}.cif"
+            filename = f"{idx}.cif"
+            
+            # Specify the directory where you want to save the CIF files
+            cif_path = os.path.join(cif_dir, filename)
+            
+            # Save the structure as a CIF file
+            struct.to(fmt="cif", filename=cif_path)
+
+            print(f"Saved: {cif_path}")
+        except Exception as e:
+            print(f'Got an error when generating material ({cif_path})', e)
 
 
 #%%
