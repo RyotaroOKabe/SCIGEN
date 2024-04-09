@@ -80,7 +80,7 @@ train_dist = {
 }
 
 # metallic radius reference (tempolary): https://en.wikipedia.org/wiki/Atomic_radii_of_the_elements_(data_page)#Note_b
-metallic_radius = {'Mn': 1.27, 'Fe': 1.26, 'Co': 1.25, 'Ni': 1.24, 'Ru': 1.34, 'Nd': 1.814, 'Gd': 1.804, 'Dy': 1.781}
+metallic_radius = {'Mn': 1.27, 'Fe': 1.26, 'Co': 1.25, 'Ni': 1.24, 'Ru': 1.34, 'Nd': 1.814, 'Gd': 1.804, 'Tb': 1.773, 'Dy': 1.781, 'Yb': 1.760}
 with open('./data/kde_bond.pkl', 'rb') as file:
     kde_dict = pkl.load(file)
 
