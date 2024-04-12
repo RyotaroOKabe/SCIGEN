@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import csv
 import time
 import pandas as pd
+import sys
 from dirs import *
 sys.path.append(ehull_pred_path)
 from pymatgen.core.structure import Structure
@@ -72,7 +73,7 @@ loss_fn = nn.BCEWithLogitsLoss(reduce=False)
 job = job_folder # "2023-06-10/mp_20_2"   #!
 task = 'gen'
 label = out_name
-add = None if label is None else '_' + label
+add = "" if label is None else '_' + label
 jobdir = join(hydradir, job)
 use_name = task + add
 use_path = join(jobdir, f'eval_{use_name}.pt') #!
