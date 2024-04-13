@@ -81,6 +81,7 @@ train_dist = {
 
 # metallic radius reference (tempolary): https://en.wikipedia.org/wiki/Atomic_radii_of_the_elements_(data_page)#Note_b
 metallic_radius = {'Mn': 1.27, 'Fe': 1.26, 'Co': 1.25, 'Ni': 1.24, 'Ru': 1.34, 'Nd': 1.814, 'Gd': 1.804, 'Tb': 1.773, 'Dy': 1.781, 'Yb': 1.760}
+# metallic_radius = {k:v*1.18 for k, v in metallic_radius.items()}   #!
 with open('./data/kde_bond.pkl', 'rb') as file:
     kde_dict = pkl.load(file)
 
@@ -125,6 +126,59 @@ def atm_types_all(n_atm, n_kn, type_known):
     mask[:n_kn] = 1
     return types, mask
 
+def cart2frac(cart_coords, lattice_matrix): #!!
+    """
+    Converts Cartesian coordinates to fractional coordinates.
+    
+    Parameters:
+    - cart_coords: torch.tensor with shape (N, 2) or (N, 3)
+    - lattice_vectors: 2x2 or 3x3 matrix of lattice vectors (torch.tensor) as columns
+
+    Returns:
+    - Fractional coordinates as ndarray
+    """
+    # Calculate the inverse of the lattice matrix
+    lattice_inv = torch.inverse(lattice_matrix)
+    # Calculate fractional coordinates
+    fractional_coords = torch.einsum('ij,ki->kj', lattice_inv, cart_coords)
+    return fractional_coords
+
+def reflect_across_line(coords, line):  #!!
+    """
+    Reflects multiple points across a line defined by `line = [a, b]` corresponding to `y = ax + b`.
+    
+    Parameters:
+    - coords: torch.tensor, tensor of shape (n, 2) where n is the number of points, each represented by (x, y).
+    - line: torch.tensor, tensor of shape (2,) representing the line coefficients [a, b] for the line y = ax + b.
+    
+    Returns:
+    - A tensor of shape (n, 2) representing the reflected points.
+    """
+    a, b = line
+    x1, y1 = coords[:, 0], coords[:, 1]
+
+    # Calculate the projection of (x1, y1) onto the line y = ax + b
+    x_proj = (x1 + a * (y1 - b)) / (1 + a**2)
+    y_proj = a * x_proj + b
+    
+    # Calculate the reflection points
+    reflected_x = x1 + 2 * (x_proj - x1)
+    reflected_y = y1 + 2 * (y_proj - y1)
+    
+    return torch.stack([reflected_x, reflected_y], dim=1)
+
+
+def vector_to_line_equation(vector, points):    #!!
+    vx, vy = vector[0], vector[1]
+    if vx == 0:
+        raise ValueError("The vector defines a vertical line, not representable as y = ax + b")
+    
+    x0, y0 = points[:, 0], points[:, 1]
+    a = vy / vx
+    b = y0 - a * x0
+    
+    return torch.stack([a.expand_as(b), b], dim=1)
+
 class AL_Template():
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         self.bond_len = bond_len
@@ -161,7 +215,7 @@ class AL_Honeycomb(AL_Template):
 class AL_Kagome(AL_Template):
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
-        self.num_known = 2
+        self.num_known = 3
         self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z], [0.5, 0.0, self.frac_z], [0.0, 0.5, self.frac_z]])
         self.a_len = 2 * self.bond_len
         self.c_len = 2 * self.bond_len
@@ -180,7 +234,7 @@ class AL_Square(AL_Template):
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = square_cell(self.a_len, self.c_len, self.device)
 
-class AL_4_8_2_Square(AL_Template):
+class AL_4_8p2(AL_Template): #!!
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 4
@@ -195,8 +249,146 @@ class AL_4_8_2_Square(AL_Template):
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = square_cell(self.a_len, self.c_len, self.device)
 
-al_dict = {'triangular': AL_Triangular, 'honeycomb': AL_Honeycomb, 'kagome': AL_Kagome, 'square': AL_Square, '4_8_2_square': AL_4_8_2_Square}
-num_known_dict = {'triangular': 1, 'honeycomb': 2, 'kagome': 3, 'square': 1, '4_8_2_square': 4}
+class AL_3p3_4p2(AL_Template): #!!
+    def __init__(self, bond_len, num_atom, type_known, frac_z, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, device)
+        self.num_known = 2
+        a = bond_len
+        lattice3d =  torch.tensor([[a, 0., 0.], [a/2, a*(1+math.sqrt(3)/2), 0.], [0., 0., a]])
+        lattice2d = lattice3d[:2, :2]
+        coords2d = torch.tensor([[0., 0.], 
+                                 [a/2, a*math.sqrt(3)/2]])
+        self.frac_known = torch.cat([cart2frac(coords2d, lattice2d), self.frac_z*torch.ones((self.num_known, 1))], dim=-1)
+        self.c_len = a
+        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
+        self.cell = lattice3d
+
+class AL_3p2_4_3_4(AL_Template): #!!
+    def __init__(self, bond_len, num_atom, type_known, frac_z, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, device)
+        self.num_known = 4
+        lat_p0 = torch.tensor([[math.cos(math.pi/12), -math.sin(math.pi/12)]])*bond_len/math.sqrt(2)
+        lat_p12 = torch.tensor([[math.sqrt(3)*math.cos(math.pi/6), math.sqrt(3)*math.sin(math.pi/6)], 
+                                [math.cos(math.pi*2/3), math.sin(math.pi*2/3)]])*(1+math.sqrt(3))*bond_len/2
+        lattice2d =  lat_p12 - lat_p0
+        coords2d = torch.tensor([[math.cos(math.pi/6), math.sin(math.pi/6)],
+                                 [0, 1],
+                                 [math.cos(math.pi/3), 1 + math.sin(math.pi/3)],
+                                 [math.cos(math.pi/6) + math.cos(math.pi/3), math.sin(math.pi/6) + math.sin(math.pi/3)]])*bond_len - lat_p0
+        # self.lat2d = lattice2d
+        # self.cart2d = coords2d
+        self.frac_known = torch.cat([cart2frac(coords2d, lattice2d), self.frac_z*torch.ones((self.num_known, 1))], dim=-1)
+        self.a_len = lattice2d.norm(dim=-1).mean()
+        self.c_len = self.a_len
+        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
+        self.cell = square_cell(self.a_len, self.c_len, self.device)
+
+class AL_3p4_6(AL_Template): #!!
+    def __init__(self, bond_len, num_atom, type_known, frac_z, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, device)
+        self.num_known = 6
+        lattice2d = torch.tensor([[4., 2*math.sqrt(3)], 
+                                [-5., math.sqrt(3)]])*bond_len/2
+        coords2d = torch.tensor([[1., math.sqrt(3)], 
+                                [2., 2*math.sqrt(3)],
+                                [-1., math.sqrt(3)],
+                                [0., 2*math.sqrt(3)],
+                                [-3., math.sqrt(3)],
+                                [-2, 2*math.sqrt(3)]])*bond_len/2
+        # self.lat2d = lattice2d
+        # self.cart2d = coords2d
+        self.frac_known = torch.cat([cart2frac(coords2d, lattice2d), self.frac_z*torch.ones((self.num_known, 1))], dim=-1)
+        self.a_len = lattice2d.norm(dim=-1).mean()
+        self.c_len = self.a_len
+        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
+        self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
+
+class AL_4_6_12(AL_Template): #!!
+    def __init__(self, bond_len, num_atom, type_known, frac_z, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, device)
+        self.num_known = 12
+        s = bond_len
+        a = s * (3+math.sqrt(3))
+        lattice2d = torch.tensor([[a, 0.], [a*math.cos(2*math.pi/3), a*math.sin(2*math.pi/3)]])
+        vec_flip = lattice2d.mean(dim=0)
+        line = vector_to_line_equation(vec_flip, torch.tensor([[0., 0.]]))[0]
+        angles = torch.linspace(0, 2 * torch.pi, steps=7)[:-1]  # [0, 60, 120, ..., 300] degrees
+        # Coordinates calculation
+        x = s * torch.cos(angles)
+        y = s * torch.sin(angles)
+        # Stack coordinates in pairs
+        coords = torch.stack((x, y), dim=1) + torch.tensor([[0.5*a, 0.5*a/math.sqrt(3)]])
+        coords_refl = reflect_across_line(coords, line)
+        self.frac_known = torch.cat([cart2frac(torch.cat([coords, coords_refl], dim=0), lattice2d), self.frac_z*torch.ones((self.num_known, 1))], dim=-1)
+        self.a_len = a
+        self.c_len = a
+        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
+        self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
+
+
+class AL_3_4_6_4(AL_Template): #!!
+    def __init__(self, bond_len, num_atom, type_known, frac_z, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, device)
+        self.num_known = 6
+        lattice2d = torch.tensor([[math.sqrt(3), 1.], 
+                                [-math.sqrt(3), 1.]])*bond_len*(1+math.sqrt(3))/2
+        coords2d = torch.tensor([[1., math.sqrt(3)], 
+                                [1+math.sqrt(3), 1+math.sqrt(3)],
+                                [1, 2+math.sqrt(3)],
+                                [-1., math.sqrt(3)], 
+                                [-1-math.sqrt(3), 1+math.sqrt(3)],
+                                [-1, 2+math.sqrt(3)]])*bond_len/2
+        # self.lat2d = lattice2d
+        # self.cart2d = coords2d
+        self.frac_known = torch.cat([cart2frac(coords2d, lattice2d), self.frac_z*torch.ones((self.num_known, 1))], dim=-1)
+        self.a_len = lattice2d.norm(dim=-1).mean()
+        self.c_len = self.a_len
+        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
+        self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
+
+class AL_3_12p2(AL_Template): #!!
+    def __init__(self, bond_len, num_atom, type_known, frac_z, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, device)
+        self.num_known = 6
+        theta = math.pi/12
+        cos_th = math.cos(theta)
+        a = bond_len/math.tan(theta)
+        lattice2d = torch.tensor([[math.sqrt(3), 1.], 
+                                [-math.sqrt(3), 1.]])*a/2
+        coords2d = torch.tensor([[a/(2*math.sqrt(2)*cos_th), a/(2*math.sqrt(2)*cos_th)], 
+                                [a/(2*math.sqrt(2)*cos_th), a/(2*math.sqrt(2)*cos_th) + bond_len],
+                                [math.cos(5*theta)*a/(2*cos_th), math.sin(5*theta)*a/(2*cos_th)],
+                                [-a/(2*math.sqrt(2)*cos_th), a/(2*math.sqrt(2)*cos_th)], 
+                                [-a/(2*math.sqrt(2)*cos_th), a/(2*math.sqrt(2)*cos_th) + bond_len],
+                                [-math.cos(5*theta)*a/(2*cos_th), math.sin(5*theta)*a/(2*cos_th)]])
+        # self.lat2d = lattice2d
+        # self.cart2d = coords2d
+        self.frac_known = torch.cat([cart2frac(coords2d, lattice2d), self.frac_z*torch.ones((self.num_known, 1))], dim=-1)
+        self.a_len = a #lattice2d.norm(dim=-1).mean()
+        self.c_len = self.a_len
+        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
+        self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
+
+class AL_Lieb(AL_Template):
+    def __init__(self, bond_len, num_atom, type_known, frac_z, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, device)
+        self.num_known = 3
+        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z], [0.5, 0.0, self.frac_z], [0.0, 0.5, self.frac_z]])
+        self.a_len = 2 * self.bond_len
+        self.c_len = 2 * self.bond_len
+        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
+        self.cell = square_cell(self.a_len, self.c_len, self.device)
+
+
+al_dict = {'triangular': AL_Triangular, 'honeycomb': AL_Honeycomb, 'kagome': AL_Kagome, 'square': AL_Square, '4_8p2': AL_4_8p2, '3p3_4p2': AL_3p3_4p2, '3p2_4_3_4': AL_3p2_4_3_4, '3p4_6': AL_3p4_6, '4_6_12': AL_4_6_12, '3_4_6_4': AL_3_4_6_4, '3_12p2': AL_3_12p2,'lieb': AL_Lieb}   #!!
+num_known_dict = {'triangular': 1, 'honeycomb': 2, 'kagome': 3, 'square': 1, '4_8p2': 4, '3p3_4p2': 2, '3p2_4_3_4': 4, '3p4_6': 6, '4_6_12': 12, '3_4_6_4': 6, '3_12p2': 6,'lieb': 3}  #!
 
 class SampleDataset(Dataset):      
     def __init__(self, dataset, max_atom, total_num, bond_sigma_per_mu, known_species, arch_type, device):
@@ -221,7 +413,8 @@ class SampleDataset(Dataset):
             self.bond_len_list = [np.random.normal(self.bond_mu_list[i], self.bond_sigma_list[i]) for i in range(self.total_num)]
         else:
             print('Sample bond length from KDE')
-            self.bond_len_list = [kde_dict[s].resample(1).item() for s in self.type_known_list]
+            # self.bond_len_list = [kde_dict[s].resample(1).item() for s in self.type_known_list]
+            self.bond_len_list = [max(kde_dict[s].resample(1).item(), 2*metallic_radius[s]) for s in self.type_known_list]
         self.frac_z_known_list = [random.uniform(0, 1) for _ in range(self.total_num)]
         # self.num_known_options = [self.num_known_arch[k] for k in self.arch_type]   #! first sample AL types, then go to AL class
         # self.num_known = np.random.choice(self.num_known_options, self.total_num) #, p = None)      #!
