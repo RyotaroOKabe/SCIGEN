@@ -81,7 +81,7 @@ train_dist = {
 
 # metallic radius reference (tempolary): https://en.wikipedia.org/wiki/Atomic_radii_of_the_elements_(data_page)#Note_b
 metallic_radius = {'Mn': 1.27, 'Fe': 1.26, 'Co': 1.25, 'Ni': 1.24, 'Ru': 1.34, 'Nd': 1.814, 'Gd': 1.804, 'Tb': 1.773, 'Dy': 1.781, 'Yb': 1.760}
-# metallic_radius = {k:v*1.18 for k, v in metallic_radius.items()}   #!
+
 with open('./data/kde_bond.pkl', 'rb') as file:
     kde_dict = pkl.load(file)
 
@@ -126,7 +126,7 @@ def atm_types_all(n_atm, n_kn, type_known):
     mask[:n_kn] = 1
     return types, mask
 
-def cart2frac(cart_coords, lattice_matrix): #!!
+def cart2frac(cart_coords, lattice_matrix): 
     """
     Converts Cartesian coordinates to fractional coordinates.
     
@@ -143,7 +143,7 @@ def cart2frac(cart_coords, lattice_matrix): #!!
     fractional_coords = torch.einsum('ij,ki->kj', lattice_inv, cart_coords)
     return fractional_coords
 
-def reflect_across_line(coords, line):  #!!
+def reflect_across_line(coords, line):  
     """
     Reflects multiple points across a line defined by `line = [a, b]` corresponding to `y = ax + b`.
     
@@ -168,7 +168,7 @@ def reflect_across_line(coords, line):  #!!
     return torch.stack([reflected_x, reflected_y], dim=1)
 
 
-def vector_to_line_equation(vector, points):    #!!
+def vector_to_line_equation(vector, points):    
     vx, vy = vector[0], vector[1]
     if vx == 0:
         raise ValueError("The vector defines a vertical line, not representable as y = ax + b")
@@ -234,7 +234,7 @@ class AL_Square(AL_Template):
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = square_cell(self.a_len, self.c_len, self.device)
 
-class AL_4_8p2(AL_Template): #!!
+class AL_4_8p2(AL_Template): 
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 4
@@ -249,7 +249,7 @@ class AL_4_8p2(AL_Template): #!!
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = square_cell(self.a_len, self.c_len, self.device)
 
-class AL_3p3_4p2(AL_Template): #!!
+class AL_3p3_4p2(AL_Template): 
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 2
@@ -264,7 +264,7 @@ class AL_3p3_4p2(AL_Template): #!!
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = lattice3d
 
-class AL_3p2_4_3_4(AL_Template): #!!
+class AL_3p2_4_3_4(AL_Template): 
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 4
@@ -285,7 +285,7 @@ class AL_3p2_4_3_4(AL_Template): #!!
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = square_cell(self.a_len, self.c_len, self.device)
 
-class AL_3p4_6(AL_Template): #!!
+class AL_3p4_6(AL_Template): 
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 6
@@ -306,7 +306,7 @@ class AL_3p4_6(AL_Template): #!!
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
-class AL_4_6_12(AL_Template): #!!
+class AL_4_6_12(AL_Template): 
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 12
@@ -330,7 +330,7 @@ class AL_4_6_12(AL_Template): #!!
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
 
-class AL_3_4_6_4(AL_Template): #!!
+class AL_3_4_6_4(AL_Template): 
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 6
@@ -351,7 +351,7 @@ class AL_3_4_6_4(AL_Template): #!!
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
-class AL_3_12p2(AL_Template): #!!
+class AL_3_12p2(AL_Template): 
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 6
@@ -391,18 +391,22 @@ al_dict = {'triangular': AL_Triangular, 'honeycomb': AL_Honeycomb, 'kagome': AL_
 num_known_dict = {'triangular': 1, 'honeycomb': 2, 'kagome': 3, 'square': 1, '4_8p2': 4, '3p3_4p2': 2, '3p2_4_3_4': 4, '3p4_6': 6, '4_6_12': 12, '3_4_6_4': 6, '3_12p2': 6,'lieb': 3}  #!
 
 class SampleDataset(Dataset):      
-    def __init__(self, dataset, max_atom, total_num, bond_sigma_per_mu, known_species, arch_type, device):
+    def __init__(self, dataset, max_atom, max_atom_factor, total_num, bond_sigma_per_mu, known_species, arch_type, device):
         super().__init__()
         self.total_num = total_num  #!
-        self.distribution = train_dist[dataset][:max_atom+1] #! modify to chhange the samplingg range options. 
-        # self.num_known_arch = {'kagome': 3, 'honeycomb': 2, 'triangular': 1}    
+        # self.distribution = train_dist[dataset][:max_atom+1]  #!! 
         self.bond_sigma_per_mu = bond_sigma_per_mu      #!
         self.known_species = known_species      #!
         self.arch_options = arch_type      #!
         self.device = device
-        # self.frac_coords_archs = {1: torch.tensor([[0.0, 0.0, 0.0]]), 2:torch.tensor([[1/3, 2/3, 0.0], [2/3, 1/3, 0.0]]), 
-        #                           3: torch.tensor([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0], [0.0, 0.5, 0.0]])}
         self.arch_list = random.choices(self.arch_options, k=self.total_num)
+        if max_atom_factor is not None: #!!
+            self.max_atom_dict = {arch: math.ceil(max_atom_factor * num_known_dict[arch]) for arch in self.arch_options}
+        else: 
+            self.max_atom_dict = {arch: max_atom for arch in self.arch_options} 
+        self.distributions_dict = {arch: train_dist[dataset][:self.max_atom_dict[arch]+1] for arch in self.arch_options}
+        print('max_atom_dict: ', self.max_atom_dict)
+        print('distributions_dict: ', self.distributions_dict)
         self.type_known_list = random.choices(self.known_species, k=self.total_num)
         self.num_known_list =[num_known_dict[arch] for arch in self.arch_list]
         if self.bond_sigma_per_mu is not None:  #!
@@ -416,8 +420,6 @@ class SampleDataset(Dataset):
             # self.bond_len_list = [kde_dict[s].resample(1).item() for s in self.type_known_list]
             self.bond_len_list = [max(kde_dict[s].resample(1).item(), 2*metallic_radius[s]) for s in self.type_known_list]
         self.frac_z_known_list = [random.uniform(0, 1) for _ in range(self.total_num)]
-        # self.num_known_options = [self.num_known_arch[k] for k in self.arch_type]   #! first sample AL types, then go to AL class
-        # self.num_known = np.random.choice(self.num_known_options, self.total_num) #, p = None)      #!
         self.is_carbon = dataset == 'carbon_24' #!
 
         self.frac_coords_list = []
@@ -439,9 +441,10 @@ class SampleDataset(Dataset):
         
     def get_num_atoms(self):
         self.num_atom_list = []
-        for n_kn in self.num_known_list:
+        for (n_kn, arch) in zip(self.num_known_list, self.arch_list):    #!!
             # Make a copy of self.distribution for each key
-            type_distribution = self.distribution.copy()
+            # type_distribution = self.distribution.copy()  #!!
+            type_distribution = self.distributions_dict[arch].copy()
             # Set the first n elements to 0
             type_distribution[:n_kn+1] = [0] * (n_kn + 1)
             sum_p = sum(type_distribution)
