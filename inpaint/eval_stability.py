@@ -30,7 +30,7 @@ import os, sys
 sys.path.append('../')
 from os.path import join
 import imageio
-from inpaint.mat_utils import vis_structure, get_pstruct_list, get_traj_pstruct_list, output_gen, str2pmg, pmg2ase, ase2pmg, lattice_params_to_matrix_torch, movie_structs, convert_seconds_short, chemical_symbols, vol_density
+from inpaint.mat_utils import vis_structure, get_pstruct_list, get_traj_pstruct_list, output_gen, str2pmg, pmg2ase, ase2pmg, lattice_params_to_matrix_torch, movie_structs, convert_seconds_short, chemical_symbols, vol_density, get_composition, smact_validity
 from ehull_prediction.utils.data import Dataset_InputStability
 from ehull_prediction.utils.model_class import GraphNetworkClassifier, generate_dataframe
 import warnings
@@ -109,6 +109,24 @@ print(f'{run_time1/total_num} sec/material')
 # vis_structure(astruct, supercell=np.diag([1,1,1]), title='astruct')
 
 #%%
+print(f'[1.1.2] Filter by SMACT composition validity')
+use_smact_comp_valid = True
+
+if use_smact_comp_valid:
+    idx_cvalids = []
+    for idx, astruct in enumerate(astruct_list):
+        atom_types = np.array([chemical_symbols.index(s) for s in astruct.get_chemical_symbols()])
+        elems, comps = get_composition(atom_types)
+        cvalid = smact_validity(elems, comps)
+        if cvalid:
+            idx_cvalids.append(idx)
+
+    astruct_list = [astruct_list[idx] for idx in idx_cvalids]
+    pstruct_list = [pstruct_list[idx] for idx in idx_cvalids]
+    
+    print(f"Filter materials by SMACT's composition validity: {len(astruct_list)}/{total_num}")
+
+#%%
 print(f'[1.2] Generate initial dataset')
 start_time1 = time.time()
 new_rows = []  # To collect new rows
@@ -123,12 +141,12 @@ for i, astruct in enumerate(astruct_list):
 
 # del astruct_list, frac_coords, atom_types, lattices, lengths, angles, all_lengths, all_angles
 
-mpdata = pd.DataFrame(new_rows).reset_index(drop=True)    #!
+mpdata = pd.DataFrame(new_rows).reset_index(drop=True)    
 mpdata['occupy_ratio'] = mpdata['structure'].map(vol_density)
 mpdata = mpdata[mpdata['occupy_ratio']<2].reset_index(drop=True)
 print(f'Filter materials by space occupation ratio: {len(mpdata)}/{num}')
-# mpdata_file = join('./ehull_prediction/data/mpdata_mp20_test.pkl')  #!
-# mpdata = pd.read_pickle(mpdata_file)    #!
+# mpdata_file = join('./ehull_prediction/data/mpdata_mp20_test.pkl')  
+# mpdata = pd.read_pickle(mpdata_file)    
 dataset = Dataset_InputStability(mpdata, r_max, target, descriptor, scaler, nearest_neighbor)  # dataset
 num = len(dataset)
 idx_te = range(num)
@@ -152,7 +170,7 @@ model = GraphNetworkClassifier(mul,
                      node_embed_dim,
                      input_dim,
                      input_embed_dim)
-model_file = join(ehull_pred_path, 'models', model_name + '.torch') #!
+model_file = join(ehull_pred_path, 'models', model_name + '.torch') 
 # model = torch.load(model_file)
 model.load_state_dict(torch.load(model_file)['state'])
 model = model.to(device)
@@ -169,7 +187,7 @@ model2 = GraphNetworkClassifier(mul,
                      node_embed_dim,
                      input_dim,
                      input_embed_dim)
-model_file2 = join(ehull_pred_path, 'models', model_name2 + '.torch') #!
+model_file2 = join(ehull_pred_path, 'models', model_name2 + '.torch')
 # model = torch.load(model_file)
 model2.load_state_dict(torch.load(model_file2)['state'])
 model2 = model2.to(device)

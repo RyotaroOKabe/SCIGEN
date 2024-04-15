@@ -7,6 +7,7 @@ from scipy.spatial.distance import pdist
 from scipy.spatial.distance import cdist
 from hydra.experimental import compose
 from hydra import initialize_config_dir
+from pymatgen.core.structure import Structure 
 from pathlib import Path
 
 import smact
@@ -164,6 +165,42 @@ def get_crystals_list(
             'angles': cur_angles.detach().cpu().numpy(),
         })
         start_idx = start_idx + num_atom
+    return crystal_array_list
+
+
+def get_crystals_list_from_cifs(cif_directory):
+    """
+    Loads all CIF files from a specified directory and returns a list of dictionaries
+    containing the components of crystal structures and their filenames.
+
+    Args:
+        cif_directory (str): The path to the directory containing CIF files.
+
+    Returns:
+        list of dicts: Each dictionary contains 'filename', 'frac_coords', 'atom_types', 'lengths', and 'angles'.
+    """
+    cif_directory = Path(cif_directory)
+    crystal_array_list = []
+
+    for i, cif_file in enumerate(cif_directory.glob('*.cif')):
+        print([i], cif_file.name)
+        try:
+            structure = Structure.from_file(cif_file)
+            frac_coords = structure.frac_coords
+            atom_types = np.array([site.specie.number for site in structure])
+            lengths = np.array(structure.lattice.abc)
+            angles = np.array(structure.lattice.angles)
+
+            crystal_array_list.append({
+                'filename': cif_file.name,
+                'frac_coords': frac_coords,
+                'atom_types': atom_types,
+                'lengths': lengths,
+                'angles': angles,
+            })
+        except Exception as e:
+            print(f"Failed to load {cif_file.name}: {e}")
+
     return crystal_array_list
 
 

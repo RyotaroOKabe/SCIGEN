@@ -26,7 +26,7 @@ sys.path.append('.')
 
 from eval_utils import (
     smact_validity, structure_validity, CompScaler, get_fp_pdist,
-    load_config, load_data, get_crystals_list, prop_model_eval, compute_cov)
+    load_config, load_data, get_crystals_list, get_crystals_list_from_cifs, prop_model_eval, compute_cov)   
 
 CrystalNNFP = CrystalNNFingerprint.from_preset("ops")
 CompFP = ElementProperty.from_preset('magpie')
@@ -85,6 +85,9 @@ class Crystal(object):
 
     def get_composition(self):
         elem_counter = Counter(self.atom_types)
+        print(f'get_composition')  
+        print('self.atom_types: ', type(self.atom_types), self.atom_types)
+        print('elem_counter: ', type(elem_counter), elem_counter)
         composition = [(elem, elem_counter[elem])
                        for elem in sorted(elem_counter.keys())]
         elems, counts = list(zip(*composition))
@@ -94,6 +97,9 @@ class Crystal(object):
         self.comps = tuple(counts.astype('int').tolist())
 
     def get_validity(self):
+        print(f'get_validity matrics of individual material')  
+        print('elems: ', type(self.elems), self.elems)
+        print('comps: ', type(self.comps), self.comps)
         self.comp_valid = smact_validity(self.elems, self.comps)
         if self.constructed:
             self.struct_valid = structure_validity(self.structure)
@@ -213,14 +219,19 @@ class GenEval(object):
 
         valid_crys = [c for c in pred_crys if c.valid]
         if len(valid_crys) >= n_samples:
+            print(f'len(valid_crys) [{len(valid_crys)}] >= n_samples [{n_samples}]')
             sampled_indices = np.random.choice(
                 len(valid_crys), n_samples, replace=False)
             self.valid_samples = [valid_crys[i] for i in sampled_indices]
         else:
-            raise Exception(
-                f'not enough valid crystals in the predicted set: {len(valid_crys)}/{n_samples}')
+            # raise Exception(
+            #     f'not enough valid crystals in the predicted set: {len(valid_crys)}/{n_samples}')
+            print(f'not enough valid crystals in the predicted set: {len(valid_crys)}/{n_samples}')
+            print('Just use all of valid_crys: ', len(valid_crys))
+            self.valid_samples = valid_crys
 
     def get_validity(self):
+        print(f'[GenEval] get_validity matrics')  
         comp_valid = np.array([c.comp_valid for c in self.crys]).mean()
         struct_valid = np.array([c.struct_valid for c in self.crys]).mean()
         valid = np.array([c.valid for c in self.crys]).mean()
@@ -265,10 +276,10 @@ class GenEval(object):
     def get_metrics(self):
         metrics = {}
         metrics.update(self.get_validity())
-        metrics.update(self.get_density_wdist())
-        metrics.update(self.get_prop_wdist())
-        metrics.update(self.get_num_elem_wdist())
-        metrics.update(self.get_coverage())
+        # metrics.update(self.get_density_wdist())
+        # metrics.update(self.get_prop_wdist())
+        # metrics.update(self.get_num_elem_wdist())
+        # metrics.update(self.get_coverage())
         return metrics
 
 class OptEval(object):
@@ -318,47 +329,64 @@ def get_file_paths(root_path, task, label='', suffix='pt'):
     return out_name
 
 
-def get_crystal_array_list(file_path, batch_idx=0):
-    data = load_data(file_path)
-    if batch_idx == -1:
-        batch_size = data['frac_coords'].shape[0]
-        crys_array_list = []
-        for i in range(batch_size):
-            tmp_crys_array_list = get_crystals_list(
-                data['frac_coords'][i],
-                data['atom_types'][i],
-                data['lengths'][i],
-                data['angles'][i],
-                data['num_atoms'][i])
-            crys_array_list.append(tmp_crys_array_list)
-    elif batch_idx == -2:
-        crys_array_list = get_crystals_list(
-            data['frac_coords'],
-            data['atom_types'],
-            data['lengths'],
-            data['angles'],
-            data['num_atoms'])        
+def get_folder_path(root_path, task, label=''): 
+    if args.label == '':
+        out_name = f'{task}'
     else:
-        crys_array_list = get_crystals_list(
-            data['frac_coords'][batch_idx],
-            data['atom_types'][batch_idx],
-            data['lengths'][batch_idx],
-            data['angles'][batch_idx],
-            data['num_atoms'][batch_idx])
+        out_name = f'{task}_{label}'
+    out_name = os.path.join(root_path, out_name)
+    return out_name
 
-    if 'input_data_batch' in data:
-        batch = data['input_data_batch']
-        if isinstance(batch, dict):
-            true_crystal_array_list = get_crystals_list(
-                batch['frac_coords'], batch['atom_types'], batch['lengths'],
-                batch['angles'], batch['num_atoms'])
-        else:
-            true_crystal_array_list = get_crystals_list(
-                batch.frac_coords, batch.atom_types, batch.lengths,
-                batch.angles, batch.num_atoms)
-    else:
+
+def get_crystal_array_list(file_path, use_cif=False, batch_idx=0):  
+    if use_cif: 
+        cif_folder = file_path
+        print(f'load structures from CIF files in: {cif_folder}')
+        crys_array_list = get_crystals_list_from_cifs(cif_folder)
         true_crystal_array_list = None
 
+    else: 
+        print(f'load structures from tensors stored in: {file_path}')
+        data = load_data(file_path)
+        if batch_idx == -1:
+            batch_size = data['frac_coords'].shape[0]
+            crys_array_list = []
+            for i in range(batch_size):
+                tmp_crys_array_list = get_crystals_list(
+                    data['frac_coords'][i],
+                    data['atom_types'][i],
+                    data['lengths'][i],
+                    data['angles'][i],
+                    data['num_atoms'][i])
+                crys_array_list.append(tmp_crys_array_list)
+        elif batch_idx == -2:
+            crys_array_list = get_crystals_list(
+                data['frac_coords'],
+                data['atom_types'],
+                data['lengths'],
+                data['angles'],
+                data['num_atoms'])        
+        else:
+            crys_array_list = get_crystals_list(
+                data['frac_coords'][batch_idx],
+                data['atom_types'][batch_idx],
+                data['lengths'][batch_idx],
+                data['angles'][batch_idx],
+                data['num_atoms'][batch_idx])
+
+        if 'input_data_batch' in data:
+            batch = data['input_data_batch']
+            if isinstance(batch, dict):
+                true_crystal_array_list = get_crystals_list(
+                    batch['frac_coords'], batch['atom_types'], batch['lengths'],
+                    batch['angles'], batch['num_atoms'])
+            else:
+                true_crystal_array_list = get_crystals_list(
+                    batch.frac_coords, batch.atom_types, batch.lengths,
+                    batch.angles, batch.num_atoms)
+        else:
+            true_crystal_array_list = None
+        
     return crys_array_list, true_crystal_array_list
 
 
@@ -381,25 +409,29 @@ def main(args):
 
     if 'opt' in args.tasks:
         opt_file_path = get_file_paths(args.root_path, 'opt', args.label)
-        crys_array_list, _ = get_crystal_array_list(opt_file_path)
+        crys_array_list, _ = get_crystal_array_list(opt_file_path, args.use_cif)    
         opt_crys = p_map(lambda x: Crystal(x), crys_array_list)
 
         opt_evaluator = OptEval(opt_crys, eval_model_name=eval_model_name)
         opt_metrics = opt_evaluator.get_metrics()
         all_metrics.update(opt_metrics)
 
-    elif 'gen' in args.tasks:
+    if 'gen' in args.tasks:
 
-        gen_file_path = get_file_paths(args.root_path, 'gen', args.label)
-        recon_file_path = get_file_paths(args.root_path, 'recon', args.label)
-        crys_array_list, _ = get_crystal_array_list(gen_file_path, batch_idx = -2)
+        if args.use_cif:    
+            gen_path = get_folder_path(args.root_path, 'gen', args.label)
+        else: 
+            gen_path = get_file_paths(args.root_path, 'gen', args.label)
+        # recon_file_path = get_file_paths(args.root_path, 'recon', args.label)
+        crys_array_list, _ = get_crystal_array_list(gen_path, args.use_cif, batch_idx = -2)  
         gen_crys = p_map(lambda x: Crystal(x), crys_array_list)
         if args.gt_file != '':
             csv = pd.read_csv(args.gt_file)
             gt_crys = p_map(get_gt_crys_ori, csv['cif'])
         else:
+            recon_file_path = get_file_paths(args.root_path, 'recon', args.label)
             _, true_crystal_array_list = get_crystal_array_list(
-                recon_file_path)
+                recon_file_path, args.use_cif)
             gt_crys = p_map(lambda x: Crystal(x), true_crystal_array_list)
         gen_evaluator = GenEval(
             gen_crys, gt_crys, eval_model_name=eval_model_name)
@@ -470,5 +502,6 @@ if __name__ == '__main__':
     parser.add_argument('--tasks', nargs='+', default=['csp'])
     parser.add_argument('--gt_file',default='')
     parser.add_argument('--multi_eval',action='store_true')
+    parser.add_argument('--use_cif',default=False)  
     args = parser.parse_args()
     main(args)
