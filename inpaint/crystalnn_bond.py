@@ -45,6 +45,7 @@ mpdata_file03 = join(ehull_pred_path, 'data/mpdata_mp20_val.pkl')  #!
 mpdata03 = pd.read_pickle(mpdata_file03)    #!
 mpdata0 = pd.concat([mpdata01, mpdata02, mpdata03], ignore_index=True)
 
+
 #%%
 dist_profile = {el:[] for el in chemical_symbols}
 astruct_list0 = list(mpdata0['structure'])
@@ -96,7 +97,7 @@ for elem in elems:
 plt.legend()
 
 #%%
-elems = ['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Dy']
+elems = ['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']
 kde_dict = {}
 for elem in dprof.keys():
     len_data = dprof[elem]
@@ -110,16 +111,18 @@ for elem in dprof.keys():
     kde_dict[elem] = kde
     if elem in elems:
     # if True:
-        plt.bar(bin_centers, counts, width=(bin_edges[1] - bin_edges[0]), color='blue', alpha=0.5, label="Histogram")
-        plt.plot(bin_centers, kde_values, color='red', label='KDE')
+        plt.figure(figsize=(6, 4))
+        plt.bar(bin_centers, counts, width=(bin_edges[1] - bin_edges[0]), color='#56b3e9', alpha=0.8, label="Histogram")
+        plt.plot(bin_centers, kde_values, color='#d55c00', label='KDE', linewidth=2)
         plt.legend()
-        plt.xlabel('Bond lengths (Angstrom)')
-        plt.ylabel('Prob.')
-        plt.title(f"{elem} (mean: {round(np.mean(len_data), 3)} A)")
+        plt.xlabel(f'Bond lengths ($\AA$)')
+        plt.ylabel('Density')
+        plt.title(f"{elem} (mean: {round(np.mean(len_data), 3)} $\AA$)")
         plt.show()
+        plt.savefig(join(savedir, f'{elem}_bond_mp20.pdf'))
         plt.close()
-with open('./data/kde_bond.pkl', 'wb') as file:
-    pkl.dump(kde_dict, file)
+# with open('./data/kde_bond.pkl', 'wb') as file:
+#     pkl.dump(kde_dict, file)
 
 #%%
 with open('./data/kde_bond.pkl', 'rb') as file:
