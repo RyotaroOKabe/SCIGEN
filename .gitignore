@@ -2,6 +2,7 @@
 __pycache__/
 figures/
 slurm/
-dir.py
 save/
+dir.py
 multiple_gen.py
+*.sh
