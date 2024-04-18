@@ -277,30 +277,46 @@ def get_pstruct_list(num_atoms, frac_coords, atom_types, lattices, atom_type_pro
         pstruct_list.append(pstruct)
     return pstruct_list
 
-def get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, atom_type_prob=True):
+def get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, t_step, atom_type_prob=True):
+    """
+    Function to get a list of pymatgen structure objects from a trajectory
+    Args:
+    num_atoms (torch.tensor): number of atoms in each frame of a trajectory
+    all_frac_coords (torch.tensor): fractional coordinates of all atoms in a trajectory
+    all_atom_types (torch.tensor): atom type of all atoms in a trajectory
+    all_lattices (torch.tensor): lattice vectors of all frames in a trajectory
+    t_step (int): time step to consider in the trajectory
+    atom_type_prob (bool): if True, atom type probabilities are given, if False, atom type indices are given
+    Returns:
+    pstruct_lists (list): list of list of pymatgen structure objects
+    """
     pstruct_lists = []
     T, n = all_lattices.shape[:2]
+    if not isinstance(t_step, int):
+        t_step = 1
+    t_list = [t for t in range(T) if t%t_step==0]
     for i in range(n):
         pstruct_list = []
         for t in range(T):
-            sum_idx_bef = num_atoms[:i].sum()
-            sum_idx_aft = num_atoms[:i+1].sum()
-            frac = all_frac_coords[t, sum_idx_bef:sum_idx_aft, :].to('cpu').to(dtype=torch.float32)
-            lattice = all_lattices[t, i].to('cpu').to(dtype=torch.float32)
-            cart = frac@lattice.T
-            atypes = all_atom_types[t, sum_idx_bef:sum_idx_aft].to('cpu')
-            if atom_type_prob:
-                atom_types_ = torch.argmax(atypes, dim=1) +1
-            else: 
-                atom_types_ = atypes
-            # print('atoms: ', atoms.shape)
-            # print('cart: ', cart.shape)
-            # print('lattice: ', lattice.shape)
-            pstruct = Structure(lattice, atom_types_, frac)
-            # Atoms(symbols=atoms, positions = cart, cell = lattice, pbc=True) 
-            pstruct_list.append(pstruct)
+            if t%t_step==0:
+                sum_idx_bef = num_atoms[:i].sum()
+                sum_idx_aft = num_atoms[:i+1].sum()
+                frac = all_frac_coords[t, sum_idx_bef:sum_idx_aft, :].to('cpu').to(dtype=torch.float32)
+                lattice = all_lattices[t, i].to('cpu').to(dtype=torch.float32)
+                cart = frac@lattice.T
+                atypes = all_atom_types[t, sum_idx_bef:sum_idx_aft].to('cpu')
+                if atom_type_prob:
+                    atom_types_ = torch.argmax(atypes, dim=1) +1
+                else: 
+                    atom_types_ = atypes
+                # print('atoms: ', atoms.shape)
+                # print('cart: ', cart.shape)
+                # print('lattice: ', lattice.shape)
+                pstruct = Structure(lattice, atom_types_, frac)
+                # Atoms(symbols=atoms, positions = cart, cell = lattice, pbc=True) 
+                pstruct_list.append(pstruct)
         pstruct_lists.append(pstruct_list)
-    return pstruct_lists
+    return pstruct_lists, t_list
 
 
 
