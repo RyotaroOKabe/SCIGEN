@@ -8,6 +8,7 @@ import csv
 import time
 import pandas as pd
 import sys
+import argparse
 sys.path.append('../')
 from dirs import *
 sys.path.append(ehull_pred_path)
@@ -70,13 +71,16 @@ irreps_out = f'{out_dim}x0e'
 loss_fn = nn.BCEWithLogitsLoss(reduce=False) 
 
 #%%
-job = job_folder # "2023-06-10/mp_20_2"   #!
+parser = argparse.ArgumentParser()
+parser.add_argument('--out_name', default=out_name, type=str)
+args = parser.parse_args()
+job = job_folder # "2023-06-10/mp_20_2"   
 task = 'gen'
-label = out_name
+label = args.out_name
 add = "" if label is None else '_' + label
 jobdir = join(hydradir, job)
 use_name = task + add
-use_path = join(jobdir, f'eval_{use_name}.pt') #!
+use_path = join(jobdir, f'eval_{use_name}.pt') 
 
 frac_coords, atom_types, lengths, angles, num_atoms, run_time, \
         all_frac_coords, all_atom_types, all_lengths, all_angles = output_gen(use_path)
@@ -143,10 +147,10 @@ for i, astruct in enumerate(astruct_list):
 
 mpdata = pd.DataFrame(new_rows).reset_index(drop=True)    
 mpdata['occupy_ratio'] = mpdata['structure'].map(vol_density)
-mpdata = mpdata[mpdata['occupy_ratio']<2].reset_index(drop=True)
+mpdata = mpdata[mpdata['occupy_ratio']<1.7].reset_index(drop=True)
 print(f'Filter materials by space occupation ratio: {len(mpdata)}/{num}')
 # mpdata_file = join('./ehull_prediction/data/mpdata_mp20_test.pkl')  
-# mpdata = pd.read_pickle(mpdata_file)    
+# mpdata = pd.read_pickle(mpdata_file)   
 dataset = Dataset_InputStability(mpdata, r_max, target, descriptor, scaler, nearest_neighbor)  # dataset
 num = len(dataset)
 idx_te = range(num)
@@ -262,11 +266,12 @@ if gen_cif:
 
 #%%
 gen_movie = False
+t_step = 1  # can be improved later.
 if gen_movie:
     print(f'[3] Generate images and gifs')
     start_time3 = time.time()
     if get_traj:
-        traj_pstruct_list = get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, atom_type_prob=False)
+        traj_pstruct_list, t_list = get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, t_step, atom_type_prob=False)
     # for _idx in id_stable:
     for i in range(num):
         idx = format(i, '05')

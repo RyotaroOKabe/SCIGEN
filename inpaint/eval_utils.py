@@ -7,7 +7,7 @@ from scipy.spatial.distance import pdist
 from scipy.spatial.distance import cdist
 from hydra.experimental import compose
 from hydra import initialize_config_dir
-from pymatgen.core.structure import Structure 
+from pymatgen.core.structure import Structure   #!!
 from pathlib import Path
 
 import smact
@@ -35,18 +35,21 @@ recommand_step_lr = {
         "perov_5": 5e-7,
         "carbon_24": 5e-6,
         "mp_20": 1e-5,
+        "uniform": 1e-5,  
         "mpts_52": 1e-5
     },
     'csp_multi':{
         "perov_5": 5e-7,
         "carbon_24": 5e-7,
         "mp_20": 1e-5,
+        "uniform": 1e-5,    
         "mpts_52": 1e-5
     },
     'gen':{
         "perov_5": 1e-6,
         "carbon_24": 1e-5,
-        "mp_20": 5e-6
+        "mp_20": 5e-6,
+        "uniform": 5e-6 
     },
 }
 
@@ -168,7 +171,7 @@ def get_crystals_list(
     return crystal_array_list
 
 
-def get_crystals_list_from_cifs(cif_directory):
+def get_crystals_list_from_cifs(cif_directory): 
     """
     Loads all CIF files from a specified directory and returns a list of dictionaries
     containing the components of crystal structures and their filenames.
