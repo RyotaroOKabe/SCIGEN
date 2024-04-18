@@ -16,7 +16,7 @@ import os, sys
 sys.path.append('../')
 from os.path import join
 from dirs import *
-from inpaint.mat_utils import get_pstruct_list, output_gen, lattice_params_to_matrix_torch
+from inpaint.mat_utils import get_pstruct_list, output_gen, lattice_params_to_matrix_torch, save_combined_cif
 import warnings
 # from m3gnet.models import Relaxer
 for category in (UserWarning, DeprecationWarning):
@@ -24,13 +24,14 @@ for category in (UserWarning, DeprecationWarning):
 savedir = join(homedir, 'figures')
 
 #%%
-job = job_folder # "2023-06-10/mp_20_2"   #!
+combine_cif = False
+job = job_folder # "2023-06-10/mp_20_2"   
 task = 'gen'
 label = out_name
 add = None if label is None else '_' + label
 jobdir = join(hydradir, job)
 use_name = task + add
-use_path = join(jobdir, f'eval_{use_name}.pt') #!
+use_path = join(jobdir, f'eval_{use_name}.pt') 
 
 frac_coords, atom_types, lengths, angles, num_atoms, run_time, \
         all_frac_coords, all_atom_types, all_lengths, all_angles = output_gen(use_path)
@@ -49,15 +50,20 @@ cif_dir= join(jobdir, use_name)
 os.system(f'rm -r {cif_dir}')
 os.makedirs(cif_dir)
 
-# Assuming pstruct_list is your list of Structure objects
-for i, struct in enumerate(pstruct_list):
-    # Construct a filename for each structure
-    filename = f"{format(i, '05')}.cif"
-    
-    # Specify the directory where you want to save the CIF files
-    cif_path = os.path.join(cif_dir, filename)
-    
-    # Save the structure as a CIF file
-    struct.to(fmt="cif", filename=cif_path)
+if combine_cif:
+    # cifs_file = join(jobdir, use_name + '.cif')
+    cifs_file = join(cif_dir, 'cifs.cif')
+    save_combined_cif(pstruct_list, cifs_file)
+else:     
+    # Assuming pstruct_list is your list of Structure objects
+    for i, struct in enumerate(pstruct_list):
+        # Construct a filename for each structure
+        filename = f"{format(i, '05')}.cif"
+        
+        # Specify the directory where you want to save the CIF files
+        cif_path = os.path.join(cif_dir, filename)
+        
+        # Save the structure as a CIF file
+        struct.to(fmt="cif", filename=cif_path)
 
-    print(f"Saved: {cif_path}")
+        print(f"Saved: {cif_path}")
