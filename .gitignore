@@ -3,3 +3,4 @@ __pycache__/
 figures/
 slurm/
 dir.py
+save/
