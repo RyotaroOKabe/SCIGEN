@@ -26,7 +26,7 @@ sys.path.append('.')
 
 from eval_utils import (
     smact_validity, structure_validity, CompScaler, get_fp_pdist,
-    load_config, load_data, get_crystals_list, get_crystals_list_from_cifs, prop_model_eval, compute_cov)   
+    load_config, load_data, get_crystals_list, get_crystals_list_from_cifs, prop_model_eval, compute_cov)   #!!
 
 CrystalNNFP = CrystalNNFingerprint.from_preset("ops")
 CompFP = ElementProperty.from_preset('magpie')
@@ -85,7 +85,7 @@ class Crystal(object):
 
     def get_composition(self):
         elem_counter = Counter(self.atom_types)
-        print(f'get_composition')  
+        print(f'get_composition')  #!!
         print('self.atom_types: ', type(self.atom_types), self.atom_types)
         print('elem_counter: ', type(elem_counter), elem_counter)
         composition = [(elem, elem_counter[elem])
@@ -97,7 +97,7 @@ class Crystal(object):
         self.comps = tuple(counts.astype('int').tolist())
 
     def get_validity(self):
-        print(f'get_validity matrics of individual material')  
+        print(f'get_validity matrics of individual material')  #!!
         print('elems: ', type(self.elems), self.elems)
         print('comps: ', type(self.comps), self.comps)
         self.comp_valid = smact_validity(self.elems, self.comps)
@@ -231,7 +231,7 @@ class GenEval(object):
             self.valid_samples = valid_crys
 
     def get_validity(self):
-        print(f'[GenEval] get_validity matrics')  
+        print(f'[GenEval] get_validity matrics')  #!!
         comp_valid = np.array([c.comp_valid for c in self.crys]).mean()
         struct_valid = np.array([c.struct_valid for c in self.crys]).mean()
         valid = np.array([c.valid for c in self.crys]).mean()
@@ -329,7 +329,7 @@ def get_file_paths(root_path, task, label='', suffix='pt'):
     return out_name
 
 
-def get_folder_path(root_path, task, label=''): 
+def get_folder_path(root_path, task, label=''): #!!
     if args.label == '':
         out_name = f'{task}'
     else:
@@ -338,8 +338,8 @@ def get_folder_path(root_path, task, label=''):
     return out_name
 
 
-def get_crystal_array_list(file_path, use_cif=False, batch_idx=0):  
-    if use_cif: 
+def get_crystal_array_list(file_path, use_cif=False, batch_idx=0):  #!!
+    if use_cif: #!!
         cif_folder = file_path
         print(f'load structures from CIF files in: {cif_folder}')
         crys_array_list = get_crystals_list_from_cifs(cif_folder)
@@ -409,7 +409,7 @@ def main(args):
 
     if 'opt' in args.tasks:
         opt_file_path = get_file_paths(args.root_path, 'opt', args.label)
-        crys_array_list, _ = get_crystal_array_list(opt_file_path, args.use_cif)    
+        crys_array_list, _ = get_crystal_array_list(opt_file_path, args.use_cif)    #!!
         opt_crys = p_map(lambda x: Crystal(x), crys_array_list)
 
         opt_evaluator = OptEval(opt_crys, eval_model_name=eval_model_name)
@@ -418,12 +418,12 @@ def main(args):
 
     if 'gen' in args.tasks:
 
-        if args.use_cif:    
+        if args.use_cif:    #!
             gen_path = get_folder_path(args.root_path, 'gen', args.label)
         else: 
             gen_path = get_file_paths(args.root_path, 'gen', args.label)
         # recon_file_path = get_file_paths(args.root_path, 'recon', args.label)
-        crys_array_list, _ = get_crystal_array_list(gen_path, args.use_cif, batch_idx = -2)  
+        crys_array_list, _ = get_crystal_array_list(gen_path, args.use_cif, batch_idx = -2)  #!!
         gen_crys = p_map(lambda x: Crystal(x), crys_array_list)
         if args.gt_file != '':
             csv = pd.read_csv(args.gt_file)
