@@ -4,3 +4,4 @@ figures/
 slurm/
 dir.py
 save/
+multiple_gen.py

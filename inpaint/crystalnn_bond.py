@@ -21,7 +21,7 @@ import pickle as pkl
 from scipy.stats import gaussian_kde
 from pymatgen.analysis.local_env import CrystalNN
 sys.path.append('../')
-from dirs import *
+from InpaintCrysDiff.dirs_template import *
 sys.path.append(ehull_pred_path)
 from inpaint.mat_utils import vis_structure, ase2pmg, chemical_symbols
 import warnings

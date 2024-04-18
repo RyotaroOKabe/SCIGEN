@@ -72,6 +72,9 @@ def diffusion(loader, model, step_lr, save_traj):
         all_lattices = torch.cat(all_lattices, dim=1)
         all_lengths, all_angles = lattices_to_params_shape(all_lattices)    # works for all-time outputs
 
+    print('num_atoms: ', num_atoms)
+    print('num_known: ', num_known)
+    
     return (
         frac_coords, atom_types, lattices, lengths, angles, num_atoms, num_known, all_frac_coords, all_atom_types, all_lattices, all_lengths, all_angles 
     )

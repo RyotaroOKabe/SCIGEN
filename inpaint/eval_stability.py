@@ -10,7 +10,7 @@ import pandas as pd
 import sys
 import argparse
 sys.path.append('../')
-from dirs import *
+from InpaintCrysDiff.dirs_template import *
 sys.path.append(ehull_pred_path)
 from pymatgen.core.structure import Structure
 from pymatgen.core.lattice import Lattice
