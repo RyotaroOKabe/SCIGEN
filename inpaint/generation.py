@@ -58,6 +58,7 @@ def diffusion(loader, model, step_lr, save_traj):
             all_frac_coords.append(traj['all_frac_coords'].detach().cpu())
             all_atom_types.append(traj['atom_types'].detach().cpu())
             all_lattices.append(traj['all_lattices'].detach().cpu())
+        print(f'batch {idx+1}/{len(loader)} done') 
 
     frac_coords = torch.cat(frac_coords, dim=0)
     num_atoms = torch.cat(num_atoms, dim=0)
@@ -79,7 +80,7 @@ def diffusion(loader, model, step_lr, save_traj):
 def main(args):
     # load_data if do reconstruction.
     model_path = Path(args.model_path)
-    print('args: ', args)   #!!
+    print('args: ', args)   
     model, _, cfg = load_model(
         model_path, load_data=False)
 
@@ -106,7 +107,7 @@ def main(args):
 
     run_time = time.time() - start_time
     total_num = args.batch_size * args.num_batches_to_samples
-    print('args: ', args)   #!!
+    print('args: ', args)   
     print(f'Total outputs: {args.num_batches_to_samples} samples x {args.batch_size} batches = {total_num} materials')
     print(f'run time: {run_time} sec = {convert_seconds_short(run_time)}')
     print(f'{run_time/args.num_batches_to_samples} sec/sample')
@@ -141,11 +142,10 @@ if __name__ == '__main__':
     parser.add_argument('--save_traj', default=False, type=bool)    
     
     parser.add_argument('--max_atom', default=20, type=int)
-    parser.add_argument('--max_atom_factor', default=None, type=float)  #!!
-    parser.add_argument('--bond_sigma_per_mu', default=None)#0.1)   
-    parser.add_argument('--known_species', nargs='+', default=['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']) #!!
-    # parser.add_argument('--arch', default=['kagome', 'honeycomb', 'triangular', 'square']) # ['kagome', 'honeycomb', 'triangular', 'square'] #!
-    parser.add_argument('--arch', nargs='+', default=['kagome', 'honeycomb', 'triangular', 'square']) # ['kagome', 'honeycomb', 'triangular', 'square'] #!!
+    parser.add_argument('--max_atom_factor', default=None, type=float) 
+    parser.add_argument('--bond_sigma_per_mu', default=None)   
+    parser.add_argument('--known_species', nargs='+', default=['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']) 
+    parser.add_argument('--arch', nargs='+', default=['kagome', 'honeycomb', 'triangular', 'square']) 
     
     args = parser.parse_args()
 
