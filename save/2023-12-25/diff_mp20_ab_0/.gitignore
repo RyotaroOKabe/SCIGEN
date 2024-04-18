@@ -1,5 +1,3 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
-figures/
-slurm/
-dir.py
+*.pt
+*/
