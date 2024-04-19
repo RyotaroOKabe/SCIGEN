@@ -7,10 +7,10 @@ dataset = 'mp_20'
 batch_size=500
 num_batches_to_samples=100
 num_materials = batch_size * num_batches_to_samples
-# save_traj = False
+save_traj = True
 num_run =6
 idx_start = 4
-arch_list = ['honeycomb']
+arch_list = ['honeycomb']   #!!! Choose the type of Archimedean lattice(s) from ['triangular', 'honeycomb', 'kagome', 'square', '4_6_12', '3p3_4p2', '3p2_4_3_4', '3p4_6', '3_4_6_4', '3_12p2', '4_8p2', 'lieb']
 atom_list = ['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']
 ###################
 
@@ -47,7 +47,10 @@ arch_natm_max = {   # max number of atoms in the unit cell
 for j in range(idx_start, idx_start+num_run):
     for i, arch in enumerate(arch_list):
         tag = format(j, '03d')
-        save_traj_arg = '--save_traj True' if j == 0 else ''  # save traj only for the first run
+        if save_traj:
+            save_traj_arg = '--save_traj True' 
+        else: 
+            save_traj_arg = '--save_traj True' if j == 0 else ''  # save traj only for the first run
         label = f'inp_{arch_nickname[arch]}{num_materials}_{tag}'
         max_atom = arch_natm_max[arch]
         job_command = f'python inpaint/generation.py --model_path {model_path} \
