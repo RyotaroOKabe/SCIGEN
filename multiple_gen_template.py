@@ -2,7 +2,7 @@ import os
 # from inpaint.inpaint_utils import arch_nickname
 
 ############
-model_path = '/home/rokabe/data2/generative/hydra/singlerun/2023-12-25/diff_mp20_ab_0'
+model_path = './save'
 dataset = 'mp_20'
 batch_size=500
 num_batches_to_samples=100
