@@ -8,9 +8,9 @@ batch_size=500
 num_batches_to_samples=100
 num_materials = batch_size * num_batches_to_samples
 # save_traj = False
-num_run = 10
-idx_start = 0
-arch_list = ['kagome']
+num_run =6
+idx_start = 4
+arch_list = ['honeycomb']
 atom_list = ['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']
 ###################
 
@@ -47,13 +47,13 @@ arch_natm_max = {   # max number of atoms in the unit cell
 for j in range(idx_start, idx_start+num_run):
     for i, arch in enumerate(arch_list):
         tag = format(j, '03d')
-        save_traj = j == 0  # save traj only for the first run
+        save_traj_arg = '--save_traj True' if j == 0 else ''  # save traj only for the first run
         label = f'inp_{arch_nickname[arch]}{num_materials}_{tag}'
         max_atom = arch_natm_max[arch]
         job_command = f'python inpaint/generation.py --model_path {model_path} \
                     --dataset {dataset} --label {label} --arch {arch} \
                     --batch_size {batch_size} --num_batches_to_samples {num_batches_to_samples}   \
-                    --max_atom {max_atom} --save_traj {save_traj}'
+                    --max_atom {max_atom} {save_traj_arg}'
         print([i, j], job_command)
         os.system(job_command)
         print([i, j], label, 'done')
