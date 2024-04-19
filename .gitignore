@@ -5,4 +5,7 @@ slurm/
 save/
 dir.py
 multiple_gen.py
+multiple_gen2.py
+multiple_gen3.py
+multiple_gen4.py
 *.sh
