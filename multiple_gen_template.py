@@ -8,8 +8,8 @@ batch_size=500
 num_batches_to_samples=100
 num_materials = batch_size * num_batches_to_samples
 save_traj = True
-num_run =6
-idx_start = 4
+num_run =20
+idx_start = 0
 arch_list = ['honeycomb']   #!!! Choose the type of Archimedean lattice(s) from ['triangular', 'honeycomb', 'kagome', 'square', '4_6_12', '3p3_4p2', '3p2_4_3_4', '3p4_6', '3_4_6_4', '3_12p2', '4_8p2', 'lieb']
 atom_list = ['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']
 ###################
