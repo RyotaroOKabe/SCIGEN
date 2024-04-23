@@ -75,7 +75,7 @@ train_dist = {
             0.053176591981132074,
             0.010576356132075472,
             0.08995430424528301],
-    'uniform' : [0.0] + [1.0]*20
+    'uniform' : [0.0] + [1.0]*30
 }
 # combine two dictionary into one
 train_dist = {**train_dist, **train_dist_arch}

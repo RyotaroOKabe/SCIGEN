@@ -73,10 +73,14 @@ loss_fn = nn.BCEWithLogitsLoss(reduce=False)
 #%%
 parser = argparse.ArgumentParser()
 parser.add_argument('--out_name', default=out_name, type=str)
+parser.add_argument('--hydradir', default=hydradir, type=str)  
+parser.add_argument('--job_folder', default=job_folder, type=str)  
 args = parser.parse_args()
+label = args.out_name
+hydradir = args.hydradir
+job_folder = args.job_folder
 job = job_folder # "2023-06-10/mp_20_2"   
 task = 'gen'
-label = args.out_name
 add = "" if label is None else '_' + label
 jobdir = join(hydradir, job)
 use_name = task + add
