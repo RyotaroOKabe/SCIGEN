@@ -99,6 +99,8 @@ class SampleDataset(Dataset):
         self.bond_sigma_per_mu = bond_sigma_per_mu     
         self.known_species = known_species   
         self.arch_options = arch_type     
+        # replace '4_6_12' with '4_6_12_large' if max_atom > 20
+        self.arch_options = ['4_6_12_large' if arch == '4_6_12' and (max_atom > 20 or max_atom_factor > 2) else arch for arch in self.arch_options]
         self.device = device
         self.arch_list = random.choices(self.arch_options, k=self.total_num)
         if max_atom_factor is not None: 
@@ -106,9 +108,9 @@ class SampleDataset(Dataset):
         else: 
             self.max_atom_dict = {arch: max_atom for arch in self.arch_options} 
         if dataset == 'uniform':  
-            self.distributions_dict = {arch: train_dist[dataset][:self.max_atom_dict[arch]+1] for arch in self.arch_options}   #!!
+            self.distributions_dict = {arch: train_dist[dataset][:self.max_atom_dict[arch]+1] for arch in self.arch_options}  
         else:
-            self.distributions_dict = {arch: train_dist[arch][:self.max_atom_dict[arch]+1] for arch in self.arch_options}   #!!
+            self.distributions_dict = {arch: train_dist[arch][:self.max_atom_dict[arch]+1] for arch in self.arch_options}  
         print('max_atom_dict: ', self.max_atom_dict)
         print('distributions_dict: ', self.distributions_dict)
         self.type_known_list = random.choices(self.known_species, k=self.total_num)

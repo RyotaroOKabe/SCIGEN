@@ -128,6 +128,37 @@ train_dist_arch = {
   0.5,
   0.0,
   0.5],
+'4_6_12_large': [0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0.027777777777777776,
+  0.014814814814814815,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.03518518518518518,
+  0.18501683501683502,
+  0.0,
+  0.11380471380471383,
+  0.0,
+  0.061952861952861954,
+  0.09696969696969698,
+  0.4644781144781145],
 '3p3_4p2': [0,
   0,
   0,
@@ -572,5 +603,5 @@ class AL_Lieb(AL_Template):
         self.cell = square_cell(self.a_len, self.c_len, self.device)
 
 
-al_dict = {'triangular': AL_Triangular, 'honeycomb': AL_Honeycomb, 'kagome': AL_Kagome, 'square': AL_Square, '4_8p2': AL_4_8p2, '3p3_4p2': AL_3p3_4p2, '3p2_4_3_4': AL_3p2_4_3_4, '3p4_6': AL_3p4_6, '4_6_12': AL_4_6_12, '3_4_6_4': AL_3_4_6_4, '3_12p2': AL_3_12p2,'lieb': AL_Lieb}   #!!
-num_known_dict = {'triangular': 1, 'honeycomb': 2, 'kagome': 3, 'square': 1, '4_8p2': 4, '3p3_4p2': 2, '3p2_4_3_4': 4, '3p4_6': 6, '4_6_12': 12, '3_4_6_4': 6, '3_12p2': 6,'lieb': 3}  #!
+al_dict = {'triangular': AL_Triangular, 'honeycomb': AL_Honeycomb, 'kagome': AL_Kagome, 'square': AL_Square, '4_8p2': AL_4_8p2, '3p3_4p2': AL_3p3_4p2, '3p2_4_3_4': AL_3p2_4_3_4, '3p4_6': AL_3p4_6, '4_6_12': AL_4_6_12, '4_6_12_large': AL_4_6_12, '3_4_6_4': AL_3_4_6_4, '3_12p2': AL_3_12p2,'lieb': AL_Lieb}   #!!
+num_known_dict = {'triangular': 1, 'honeycomb': 2, 'kagome': 3, 'square': 1, '4_8p2': 4, '3p3_4p2': 2, '3p2_4_3_4': 4, '3p4_6': 6, '4_6_12': 12, '4_6_12_large': 12, '3_4_6_4': 6, '3_12p2': 6,'lieb': 3}  #!

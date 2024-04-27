@@ -451,10 +451,10 @@ def vol_density(astruct):
     atoms_volume = 0
     for s in species:
         atoms_volume += atom_volume(s)
-    return atoms_volume/lvol
+    return atoms_volume/(abs(lvol)+1e-4)
 
 
-def get_composition(atom_types):    
+def get_composition(atom_types):    #!!
     elem_counter = Counter(atom_types)
     composition = [(elem, elem_counter[elem])
                     for elem in sorted(elem_counter.keys())]
@@ -467,7 +467,7 @@ def get_composition(atom_types):
 
 def smact_validity(comp, count,
                    use_pauling_test=True,
-                   include_alloys=True):    
+                   include_alloys=True):    #!!
     elem_symbols = tuple([chemical_symbols[elem] for elem in comp])
     space = smact.element_dictionary(elem_symbols)
     smact_elems = [e[1] for e in space.items()]

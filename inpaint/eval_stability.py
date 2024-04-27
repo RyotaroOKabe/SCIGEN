@@ -10,7 +10,7 @@ import pandas as pd
 import sys
 import argparse
 sys.path.append('../')
-from InpaintCrysDiff.dirs_template import *
+from dirs import *
 sys.path.append(ehull_pred_path)
 from pymatgen.core.structure import Structure
 from pymatgen.core.lattice import Lattice
@@ -73,18 +73,14 @@ loss_fn = nn.BCEWithLogitsLoss(reduce=False)
 #%%
 parser = argparse.ArgumentParser()
 parser.add_argument('--out_name', default=out_name, type=str)
-parser.add_argument('--hydradir', default=hydradir, type=str)  
-parser.add_argument('--job_folder', default=job_folder, type=str)  
 args = parser.parse_args()
-label = args.out_name
-hydradir = args.hydradir
-job_folder = args.job_folder
-job = job_folder # "2023-06-10/mp_20_2"   
+job = job_folder # "2023-06-10/mp_20_2"   #!
 task = 'gen'
+label = args.out_name
 add = "" if label is None else '_' + label
 jobdir = join(hydradir, job)
 use_name = task + add
-use_path = join(jobdir, f'eval_{use_name}.pt') 
+use_path = join(jobdir, f'eval_{use_name}.pt') #!
 
 frac_coords, atom_types, lengths, angles, num_atoms, run_time, \
         all_frac_coords, all_atom_types, all_lengths, all_angles = output_gen(use_path)
@@ -149,12 +145,12 @@ for i, astruct in enumerate(astruct_list):
 
 # del astruct_list, frac_coords, atom_types, lattices, lengths, angles, all_lengths, all_angles
 
-mpdata = pd.DataFrame(new_rows).reset_index(drop=True)    
+mpdata = pd.DataFrame(new_rows).reset_index(drop=True)    #!
 mpdata['occupy_ratio'] = mpdata['structure'].map(vol_density)
 mpdata = mpdata[mpdata['occupy_ratio']<1.7].reset_index(drop=True)
 print(f'Filter materials by space occupation ratio: {len(mpdata)}/{num}')
-# mpdata_file = join('./ehull_prediction/data/mpdata_mp20_test.pkl')  
-# mpdata = pd.read_pickle(mpdata_file)   
+# mpdata_file = join('./ehull_prediction/data/mpdata_mp20_test.pkl')  #!
+# mpdata = pd.read_pickle(mpdata_file)    #!
 dataset = Dataset_InputStability(mpdata, r_max, target, descriptor, scaler, nearest_neighbor)  # dataset
 num = len(dataset)
 idx_te = range(num)
@@ -178,7 +174,7 @@ model = GraphNetworkClassifier(mul,
                      node_embed_dim,
                      input_dim,
                      input_embed_dim)
-model_file = join(ehull_pred_path, 'models', model_name + '.torch') 
+model_file = join(ehull_pred_path, 'models', model_name + '.torch') #!
 # model = torch.load(model_file)
 model.load_state_dict(torch.load(model_file)['state'])
 model = model.to(device)
@@ -195,7 +191,7 @@ model2 = GraphNetworkClassifier(mul,
                      node_embed_dim,
                      input_dim,
                      input_embed_dim)
-model_file2 = join(ehull_pred_path, 'models', model_name2 + '.torch')
+model_file2 = join(ehull_pred_path, 'models', model_name2 + '.torch') #!
 # model = torch.load(model_file)
 model2.load_state_dict(torch.load(model_file2)['state'])
 model2 = model2.to(device)
