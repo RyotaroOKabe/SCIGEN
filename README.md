@@ -1,6 +1,6 @@
-# InpaintCrysDiff
+# SCIGEN
 
-Implementation codes for Crystal Structure Prediction by Joint Equivariant Diffusion with Structure-Inpainting.  
+Implementation codes for crystal structure prediction by Joint equivariant diffusion with structural constraints.  
 
 ### Dependencies
 
