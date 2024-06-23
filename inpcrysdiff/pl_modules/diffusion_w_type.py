@@ -221,7 +221,6 @@ class CSPDiffusion(BaseModule):      #TODO
 @torch.no_grad()
 def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
 
-
     batch_size = batch.num_graphs
 
     l_T_unk, x_T_unk = torch.randn([batch_size, 3, 3]).to(self.device), torch.rand([batch.num_nodes, 3]).to(self.device)    #TODO
@@ -235,7 +234,6 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
     t_0_known = F.one_hot(batch.atom_types_known - 1, num_classes=MAX_ATOMIC_NUM).float()
     mask_l, mask_x, mask_t = batch.mask_l, batch.mask_x, batch.mask_t   #TODO
     mask_x_inv, mask_l_inv, mask_t_inv = 1 - mask_x, 1 - mask_l, 1 - mask_t
-    num_known = torch.LongTensor([batch.num_known])  #!!
     
     x_T = mask_x.unsqueeze(-1) * x_T_known + mask_x_inv.unsqueeze(-1) * x_T_unk     #TODO
     l_T = mask_l.unsqueeze(-1) * l_T_known + mask_l_inv.unsqueeze(-1) * l_T_unk     #TODO
@@ -271,19 +269,19 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
         c0 = 1.0 / torch.sqrt(alphas)
         c1 = (1 - alphas) / torch.sqrt(1 - alphas_cumprod)
         
-        C0 = torch.sqrt(alphas_cumprod) #!
-        C1 = torch.sqrt(1. - alphas_cumprod)    #!
+        # C0 = torch.sqrt(alphas_cumprod) #!
+        # C1 = torch.sqrt(1. - alphas_cumprod)    #!
+        C0_minus_0 = torch.sqrt(alphas_cumprod) #!240622
+        C1_minus_0 = torch.sqrt(1. - alphas_cumprod)    #!240622
+        sigma_x_minus_0 = sigma_x    #!240622
+        alphas_cumprod_minus_1 = self.beta_scheduler.alphas_cumprod[t-1]
+        C0_minus_1 = torch.sqrt(alphas_cumprod_minus_1) #!240622
+        C1_minus_1 = torch.sqrt(1. - alphas_cumprod_minus_1)    #!240622
+        sigma_x_minus_1 = self.sigma_scheduler.sigmas[t-1]    #!240622
 
         x_t_unk = traj[t]['frac_coords']    #TODO
         l_t_unk = traj[t]['lattices']    #TODO
         t_t_unk = traj[t]['atom_types']    #TODO
-
-        # x_t_known = traj[t]['frac_coords']    #TODO: can skip??
-        # l_t_known = traj[t]['lattices']    #TODO: can skip??
-        # t_t_known = traj[t]['atom_types']    #TODO: can skip??
-        # x_t_known = (x_0_known + sigma_x*rand_x_known)%1   #TODO  # check!
-        # l_t_minus_05_known = c0 * l_0_known + c1 * rand_l_known     #TODO
-        # t_t_known = c0 * t_0_known + c1 * rand_t_known    #TODO
 
         if self.keep_coords:
             x_t = x_T
@@ -300,27 +298,27 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
         step_size = step_lr * (sigma_x / self.sigma_scheduler.sigma_begin) ** 2
         std_x = torch.sqrt(2 * step_size)
 
-        pred_l, pred_x, pred_t = self.decoder(time_emb, t_t_unk, x_t_unk, l_t_unk, batch.num_atoms, batch.batch)
+        pred_l, pred_x, pred_t = self.decoder(time_emb, t_t_unk, x_t_unk, l_t_unk, batch.num_atoms, batch.batch)    #TODO  check!
 
         pred_x = pred_x * torch.sqrt(sigma_norm)
 
-        x_t_minus_05_unk = x_t_unk - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t
+        x_t_minus_05_unk = x_t_unk - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t   #TODO
 
-        l_t_minus_05_unk = l_t_unk
+        l_t_minus_05_unk = l_t_unk   #TODO
 
-        t_t_minus_05_unk = t_t_unk
+        t_t_minus_05_unk = t_t_unk   #TODO
 
-        rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)
-        rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)
-        rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)
+        rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)    #TODO
+        rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)    #TODO
+        rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)    #TODO
         
-        x_t_minus_05_known = (x_0_known + sigma_x*rand_x_known)%1
-        l_t_minus_05_known = C0 * l_0_known + C1 * rand_l_known 
-        t_t_minus_05_known = C0 * t_0_known + C1 * rand_t_known  
+        x_t_minus_05_known = (x_0_known + sigma_x_minus_0*rand_x_known)%1   #TODO   #!240622
+        l_t_minus_05_known = C0_minus_0 * l_0_known + C1_minus_0 * rand_l_known     #TODO   #!240622
+        t_t_minus_05_known = C0_minus_0 * t_0_known + C1_minus_0 * rand_t_known    #TODO   #!240622
 
-        x_t_minus_05 = mask_x.unsqueeze(-1) * x_t_minus_05_known + mask_x_inv.unsqueeze(-1) * x_t_minus_05_unk 
-        l_t_minus_05 = mask_l.unsqueeze(-1) * l_t_minus_05_known + mask_l_inv.unsqueeze(-1) * l_t_minus_05_unk 
-        t_t_minus_05 = mask_t.unsqueeze(-1) * t_t_minus_05_known + mask_t_inv.unsqueeze(-1) * t_t_minus_05_unk 
+        x_t_minus_05 = mask_x.unsqueeze(-1) * x_t_minus_05_known + mask_x_inv.unsqueeze(-1) * x_t_minus_05_unk  #TODO
+        l_t_minus_05 = mask_l.unsqueeze(-1) * l_t_minus_05_known + mask_l_inv.unsqueeze(-1) * l_t_minus_05_unk   #TODO
+        t_t_minus_05 = mask_t.unsqueeze(-1) * t_t_minus_05_known + mask_t_inv.unsqueeze(-1) * t_t_minus_05_unk   #TODO
         
         
 
@@ -339,27 +337,27 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
 
         pred_x = pred_x * torch.sqrt(sigma_norm)
 
-        x_t_minus_1_unk = x_t_minus_05 - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t 
+        x_t_minus_1_unk = x_t_minus_05 - step_size * pred_x + std_x * rand_x if not self.keep_coords else x_t   #TODO
 
-        l_t_minus_1_unk = c0 * (l_t_minus_05 - c1 * pred_l) + sigmas * rand_l if not self.keep_lattice else l_t 
+        l_t_minus_1_unk = c0 * (l_t_minus_05 - c1 * pred_l) + sigmas * rand_l if not self.keep_lattice else l_t   #TODO
 
-        t_t_minus_1_unk = c0 * (t_t_minus_05 - c1 * pred_t) + sigmas * rand_t 
+        t_t_minus_1_unk = c0 * (t_t_minus_05 - c1 * pred_t) + sigmas * rand_t   #TODO
 
-        rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T) 
-        rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T) 
-        rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T) 
+        rand_l_known = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)    #TODO
+        rand_t_known = torch.randn_like(t_T) if t > 1 else torch.zeros_like(t_T)    #TODO
+        rand_x_known = torch.randn_like(x_T) if t > 1 else torch.zeros_like(x_T)    #TODO
         
-        x_t_minus_1_known = (x_0_known + sigma_x*rand_x_known)%1  
-        l_t_minus_1_known = C0 * l_0_known + C1 * rand_l_known  
-        t_t_minus_1_known = C0 * t_0_known + C1 * rand_t_known 
+        x_t_minus_1_known = (x_0_known + sigma_x_minus_1*rand_x_known)%1    #TODO #!240622
+        l_t_minus_1_known = C0_minus_1 * l_0_known + C1_minus_1 * rand_l_known     #TODO
+        t_t_minus_1_known = C0_minus_1 * t_0_known + C1_minus_1 * rand_t_known   #TODO
 
-        x_t_minus_1 = mask_x.unsqueeze(-1) * x_t_minus_1_known + mask_x_inv.unsqueeze(-1) * x_t_minus_1_unk 
-        l_t_minus_1 = mask_l.unsqueeze(-1) * l_t_minus_1_known + mask_l_inv.unsqueeze(-1) * l_t_minus_1_unk 
-        t_t_minus_1 = mask_t.unsqueeze(-1) * t_t_minus_1_known + mask_t_inv.unsqueeze(-1) * t_t_minus_1_unk  
+        x_t_minus_1 = mask_x.unsqueeze(-1) * x_t_minus_1_known + mask_x_inv.unsqueeze(-1) * x_t_minus_1_unk  #TODO
+        l_t_minus_1 = mask_l.unsqueeze(-1) * l_t_minus_1_known + mask_l_inv.unsqueeze(-1) * l_t_minus_1_unk   #TODO
+        t_t_minus_1 = mask_t.unsqueeze(-1) * t_t_minus_1_known + mask_t_inv.unsqueeze(-1) * t_t_minus_1_unk   #TODO
 
         traj[t - 1] = {
             'num_atoms' : batch.num_atoms,
-            'num_known' : num_known,
+            'num_known' : torch.LongTensor([batch.num_known]),  #!!
             'atom_types' : t_t_minus_1,
             'frac_coords' : x_t_minus_1 % 1.,
             'lattices' : l_t_minus_1              
@@ -367,7 +365,7 @@ def sample_inpaint(self, batch, diff_ratio = 1.0, step_lr = 1e-5):      #TODO
 
     traj_stack = {
         'num_atoms' : batch.num_atoms,
-        'num_known' : num_known,  #!!
+        'num_known' : torch.LongTensor([batch.num_known]),  #!!
         'atom_types' : torch.stack([traj[i]['atom_types'] for i in range(self.beta_scheduler.timesteps, -1, -1)]).argmax(dim=-1) + 1,
         'all_frac_coords' : torch.stack([traj[i]['frac_coords'] for i in range(self.beta_scheduler.timesteps, -1, -1)]),
         'all_lattices' : torch.stack([traj[i]['lattices'] for i in range(self.beta_scheduler.timesteps, -1, -1)])
