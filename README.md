@@ -34,7 +34,7 @@ python gen_script/generation.py --model_path <model_path> --label <label> --max_
 ### Evaluation
 
 #### Down-sample stable material structures, and save as CIF files (full source code will be released soon). 
-python scigen/eval_stability.py    
+python gen_script/eval_stability.py    
 
 
 
