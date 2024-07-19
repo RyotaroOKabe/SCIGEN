@@ -39,7 +39,7 @@ python scigen/eval_stability.py
 
 
 ## References
-**Publication:** 
+**Publication:**    
 """   
 @article{okabe2024structural,
   title={Structural Constraint Integration in Generative Model for Discovery of Quantum Material Candidates},
@@ -51,7 +51,7 @@ python scigen/eval_stability.py
 https://arxiv.org/abs/2407.04557    
 """   
 
-**Dataset:** 
+**Dataset:**    
 
 """   
 https://arxiv.org/abs/2407.04557
