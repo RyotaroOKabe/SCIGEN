@@ -1,7 +1,9 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+archive/
 figures/
 slurm/
+conf_sg/
 dir.py
 multiple_gen.py
 multiple_gen2.py
