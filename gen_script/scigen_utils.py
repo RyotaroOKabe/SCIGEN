@@ -24,7 +24,7 @@ from p_tqdm import p_map
 import pickle as pkl
 import pdb
 import os
-from inpcrysdiff.pl_modules.diffusion_w_type import MAX_ATOMIC_NUM  
+from scigen.pl_modules.diffusion_w_type import MAX_ATOMIC_NUM  
 
 
 train_dist = {
