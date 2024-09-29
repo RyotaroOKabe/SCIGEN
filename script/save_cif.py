@@ -1,69 +1,81 @@
 #%%
 """
-https://www.notion.so/230408-visualization-of-the-generative-process-84753ea722e14a358cf61832902bb127
+Script for visualizing the generative process of crystal structures.
+Reference: https://www.notion.so/230408-visualization-of-the-generative-process-84753ea722e14a358cf61832902bb127
 """
-import numpy as np
-import matplotlib.pyplot as plt
+
+import os
+import sys
 import time
-import matplotlib as mpl
+import numpy as np
 import torch
-torch.set_default_dtype(torch.float64)
-if torch.cuda.is_available():
-    device = 'cuda'
-else:
-    device = 'cpu'
-import os, sys
-sys.path.append('../')
-from os.path import join
-from ..config_scigen import *
-from inpaint.mat_utils import get_pstruct_list, output_gen, lattice_params_to_matrix_torch, save_combined_cif
+import matplotlib.pyplot as plt
 import warnings
-# from m3gnet.models import Relaxer
+
+# Set default tensor data type and device
+torch.set_default_dtype(torch.float64)
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+# Import custom modules
+sys.path.append('../')  # Adjust path for custom modules
+from os.path import join
+from config_scigen import home_dir, hydra_dir, job_dir, out_name
+from script.mat_utils import (
+    get_pstruct_list, output_gen, lattice_params_to_matrix_torch, save_combined_cif
+)
+
+# Suppress specific warnings for cleaner output
 for category in (UserWarning, DeprecationWarning):
     warnings.filterwarnings("ignore", category=category, module="torch")
-savedir = join(homedir, 'figures')
+
+# Directory for saving figures
+savedir = join(home_dir, 'figures')
 
 #%%
-combine_cif = False
-job = job_folder # "2023-06-10/mp_20_2"   
+# Configuration
+combine_cif = False  # Option to combine all structures into a single CIF file
 task = 'gen'
 label = out_name
-add = None if label is None else '_' + label
-jobdir = join(hydradir, job)
-use_name = task + add
-use_path = join(jobdir, f'eval_{use_name}.pt') 
+add = f'_{label}' if label else ''
+job_dir = join(hydra_dir, job_dir)
+use_name = f'eval_{task}{add}'
+use_path = join(job_dir, f'{use_name}.pt')
 
+# Load data from generated output
 frac_coords, atom_types, lengths, angles, num_atoms, run_time, \
-        all_frac_coords, all_atom_types, all_lengths, all_angles = output_gen(use_path)
+    all_frac_coords, all_atom_types, all_lengths, all_angles = output_gen(use_path)
+
+# Convert lattice parameters to matrix format
 lattices = lattice_params_to_matrix_torch(lengths, angles).to(dtype=torch.float32)
-get_traj = True if all([len(a)>0 for a in [all_frac_coords, all_atom_types, all_lengths, all_angles]]) else False
+
+# Check if trajectory data is available
+get_traj = all(len(a) > 0 for a in [all_frac_coords, all_atom_types, all_lengths, all_angles])
 if get_traj:
-    print('We have access to traj data!')
+    print('We have access to trajectory data!')
     all_lattices = torch.stack([lattice_params_to_matrix_torch(all_lengths[i], all_angles[i]) for i in range(len(all_lengths))])
+
+# Number of structures to process
 num = len(lattices)
-print("jobdir: ", jobdir)
+print("job_dir: ", job_dir)
 
 #%%
-#[1] load structure
+# [1] Load structure data and save CIF files
 pstruct_list = get_pstruct_list(num_atoms, frac_coords, atom_types, lattices, atom_type_prob=True)
-cif_dir= join(jobdir, use_name)
+cif_dir = join(job_dir, use_name)
+
+# Remove and recreate the CIF directory
 os.system(f'rm -r {cif_dir}')
 os.makedirs(cif_dir)
 
+# Save structures in CIF format
 if combine_cif:
-    # cifs_file = join(jobdir, use_name + '.cif')
+    # Save all structures in a single CIF file
     cifs_file = join(cif_dir, 'cifs.cif')
     save_combined_cif(pstruct_list, cifs_file)
-else:     
-    # Assuming pstruct_list is your list of Structure objects
+else:
+    # Save each structure as an individual CIF file
     for i, struct in enumerate(pstruct_list):
-        # Construct a filename for each structure
         filename = f"{format(i, '05')}.cif"
-        
-        # Specify the directory where you want to save the CIF files
-        cif_path = os.path.join(cif_dir, filename)
-        
-        # Save the structure as a CIF file
+        cif_path = join(cif_dir, filename)
         struct.to(fmt="cif", filename=cif_path)
-
         print(f"Saved: {cif_path}")
