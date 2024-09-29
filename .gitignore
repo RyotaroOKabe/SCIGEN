@@ -17,3 +17,5 @@ multiple_stab.py
 *.sh
 env_sub_torch201-39.yml
 env_sub_torch23-311.yml
+
+.env
