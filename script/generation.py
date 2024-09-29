@@ -28,7 +28,7 @@ import pdb
 import os
 
 from scigen.pl_modules.diffusion_w_type import sample_scigen, MAX_ATOMIC_NUM  
-from scigen_utils import *
+from gen_utils import *
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')   
 
 

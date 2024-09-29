@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from torch_geometric.data import Data, Batch, DataLoader
 from torch.utils.data import Dataset
 from eval_utils import load_model, lattices_to_params_shape, get_crystals_list, recommand_step_lr
-from arch_utils import *    
+from sc_utils import *    
 from pymatgen.core.structure import Structure
 from pymatgen.core.lattice import Lattice
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
