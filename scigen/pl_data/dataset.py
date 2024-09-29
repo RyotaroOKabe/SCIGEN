@@ -9,8 +9,8 @@ from torch_geometric.data import Data
 import pickle
 import numpy as np
 
-from diffcsp.common.utils import PROJECT_ROOT
-from diffcsp.common.data_utils import (
+from scigen.common.utils import PROJECT_ROOT
+from scigen.common.data_utils import (
     preprocess, preprocess_tensors, add_scaled_lattice_prop)
 
 
@@ -155,7 +155,7 @@ class TensorCrystDataset(Dataset):
 @hydra.main(config_path=str(PROJECT_ROOT / "conf"), config_name="default")
 def main(cfg: omegaconf.DictConfig):
     from torch_geometric.data import Batch
-    from diffcsp.common.data_utils import get_scaler_from_data_list
+    from scigen.common.data_utils import get_scaler_from_data_list
     dataset: CrystDataset = hydra.utils.instantiate(
         cfg.data.datamodule.datasets.train, _recursive_=False
     )

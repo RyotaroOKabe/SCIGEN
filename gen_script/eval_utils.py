@@ -16,10 +16,10 @@ from smact.screening import pauling_test
 import sys
 sys.path.append('.')
 
-from diffcsp.common.constants import CompScalerMeans, CompScalerStds
-from diffcsp.common.data_utils import StandardScaler, chemical_symbols
-from diffcsp.pl_data.dataset import TensorCrystDataset
-from diffcsp.pl_data.datamodule import worker_init_fn
+from scigen.common.constants import CompScalerMeans, CompScalerStds
+from scigen.common.data_utils import StandardScaler, chemical_symbols
+from scigen.pl_data.dataset import TensorCrystDataset
+from scigen.pl_data.datamodule import worker_init_fn
 
 from torch_geometric.data import DataLoader
 
@@ -82,9 +82,9 @@ def load_data(file_path):
 
 
 def get_model_path(eval_model_name):
-    import diffcsp
+    import scigen
     model_path = (
-        Path(diffcsp.__file__).parent / 'prop_models' / eval_model_name)
+        Path(scigen.__file__).parent / 'prop_models' / eval_model_name)
     return model_path
 
 
