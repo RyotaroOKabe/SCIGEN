@@ -4,6 +4,7 @@ archive/
 figures/
 slurm/
 conf_sg/
+save_tmp/
 dir.py
 multiple_gen.py
 multiple_gen2.py

@@ -15,10 +15,10 @@ data:
   early_stopping_patience: 100000
   teacher_forcing_max_epoch: 500
   datamodule:
-    _target_: diffcsp.pl_data.datamodule.CrystDataModule
+    _target_: scigen.pl_data.datamodule.CrystDataModule
     datasets:
       train:
-        _target_: diffcsp.pl_data.dataset.CrystDataset
+        _target_: scigen.pl_data.dataset.CrystDataset
         name: Formation energy train
         path: ${data.root_path}/train.csv
         prop: ${data.prop}
@@ -28,7 +28,7 @@ data:
         lattice_scale_method: ${data.lattice_scale_method}
         preprocess_workers: ${data.preprocess_workers}
       val:
-      - _target_: diffcsp.pl_data.dataset.CrystDataset
+      - _target_: scigen.pl_data.dataset.CrystDataset
         name: Formation energy val
         path: ${data.root_path}/val.csv
         prop: ${data.prop}
@@ -38,7 +38,7 @@ data:
         lattice_scale_method: ${data.lattice_scale_method}
         preprocess_workers: ${data.preprocess_workers}
       test:
-      - _target_: diffcsp.pl_data.dataset.CrystDataset
+      - _target_: scigen.pl_data.dataset.CrystDataset
         name: Formation energy test
         path: ${data.root_path}/test.csv
         prop: ${data.prop}
@@ -73,7 +73,7 @@ logging:
     log_momentum: false
 model:
   encoder:
-    _target_: diffcsp.pl_modules.gnn.DimeNetPlusPlusWrap
+    _target_: scigen.pl_modules.gnn.DimeNetPlusPlusWrap
     num_targets: ${data.num_targets}
     hidden_channels: 128
     num_blocks: 4
@@ -90,7 +90,7 @@ model:
     num_after_skip: 2
     num_output_layers: 3
     readout: ${data.readout}
-  _target_: diffcsp.pl_modules.model.CrystGNN_Supervise
+  _target_: scigen.pl_modules.model.CrystGNN_Supervise
   use_orientation: false
   hidden_dim: 128
   fc_num_layers: 4
