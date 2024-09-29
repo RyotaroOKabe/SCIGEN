@@ -20,3 +20,7 @@ env_sub_torch201-39.yml
 env_sub_torch23-311.yml
 
 .env
+
+# data 
+data/*/*.pt
+data*/*/*.pt
