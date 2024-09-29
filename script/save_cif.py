@@ -15,7 +15,7 @@ else:
 import os, sys
 sys.path.append('../')
 from os.path import join
-from InpaintCrysDiff.dirs_template import *
+from ..config_scigen import *
 from inpaint.mat_utils import get_pstruct_list, output_gen, lattice_params_to_matrix_torch, save_combined_cif
 import warnings
 # from m3gnet.models import Relaxer

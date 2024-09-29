@@ -365,9 +365,9 @@ def vector_to_line_equation(vector, points):
     return torch.stack([a.expand_as(b), b], dim=1)
 
 class SC_Base():
-  """
-  Base class for structural constraints
-  """
+    """
+    Base class for structural constraints
+    """
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         self.bond_len = bond_len
         self.num_atom = num_atom
@@ -378,9 +378,9 @@ class SC_Base():
 
 
 class SC_Triangular(SC_Base):
-  """
-  Triangular lattice
-  """
+    """
+    Triangular lattice
+    """
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 1
