@@ -5,7 +5,6 @@ figures/
 slurm/
 conf_sg/
 save_tmp/
-screening/*  # tmp
 dir.py
 multiple_gen.py
 multiple_gen2.py
@@ -28,3 +27,6 @@ data*/*/*.pt
 
 # home
 config_scigen.py
+
+# screening 
+screening/
