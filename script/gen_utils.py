@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from torch_geometric.data import Data, Batch, DataLoader
 from torch.utils.data import Dataset
 from eval_utils import load_model, lattices_to_params_shape, get_crystals_list, recommand_step_lr
-from arch_utils import *    
+from sc_utils import *    
 from pymatgen.core.structure import Structure
 from pymatgen.core.lattice import Lattice
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
@@ -100,7 +100,7 @@ class SampleDataset(Dataset):
         self.known_species = known_species   
         self.arch_options = arch_type     
         # replace '4_6_12' with '4_6_12_large' if max_atom > 20
-        self.arch_options = ['4_6_12_large' if arch == '4_6_12' and (max_atom > 20 or max_atom_factor > 2) else arch for arch in self.arch_options]
+        # self.arch_options = ['4_6_12_large' if arch == '4_6_12' and (max_atom > 20 or max_atom_factor > 2) else arch for arch in self.arch_options]
         self.device = device
         self.arch_list = random.choices(self.arch_options, k=self.total_num)
         if max_atom_factor is not None: 

@@ -5,25 +5,25 @@ from sample import chemical_symbols
 from scigen.pl_modules.diffusion_w_type import MAX_ATOMIC_NUM 
  
 
-arch_nickname = {
-'triangular': 'tri',
-'honeycomb': 'hon', 
-'kagome': 'kag',
-'4_6_12':	'grt',
-'3p3_4p2':	'elt',
-'3p2_4_3_4':	'sns',
-'3p4_6':	'snh',
-'3_4_6_4':	'srt',
-'3_12p2':	'trh',
-'4_8p2':	'tsq',
-'lieb':	'lieb',
-}
+# arch_nickname = {
+# 'triangular': 'tri',
+# 'honeycomb': 'hon', 
+# 'kagome': 'kag',
+# '4_6_12':	'grt',
+# '3p3_4p2':	'elt',
+# '3p2_4_3_4':	'sns',
+# '3p4_6':	'snh',
+# '3_4_6_4':	'srt',
+# '3_12p2':	'trh',
+# '4_8p2':	'tsq',
+# 'lieb':	'lieb',
+# }
 
-lattice_types = {'kagome': 'hexagonal', 'honeycomb': 'hexagonal', 'triangular': 'hexagonal'}
+# lattice_types = {'kagome': 'hexagonal', 'honeycomb': 'hexagonal', 'triangular': 'hexagonal'}
 
 
 train_dist_arch = {
-'triangular': [0,
+'tri': [0,
   0,
   0.27976617542482696,
   0.18398577356544843,
@@ -44,7 +44,7 @@ train_dist_arch = {
   0.012205581157194063,
   0.0,
   0.011781609195402302],
- 'honeycomb': [0,
+ 'hon': [0,
   0,
   0.0,
   0.011901340996168581,
@@ -65,7 +65,7 @@ train_dist_arch = {
   0.03720681379498239,
   0.02399540954819115,
   0.02084988162705537],
- 'kagome': [0,
+ 'kag': [0,
   0,
   0.0,
   0.0,
@@ -86,7 +86,7 @@ train_dist_arch = {
   0.05482479147593927,
   0.046092709132356025,
   0.04157589584207628],
-'square': [0,
+'sqr': [0,
   0,
   0.4197183539323242,
   0.08764353883132335,
@@ -107,59 +107,7 @@ train_dist_arch = {
   0.0014228967242567155,
   0.0015275141175260507,
   0.0026749099966450565],
-'4_6_12': [0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0.5,
-  0.0,
-  0.5],
-'4_6_12_large': [0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0.027777777777777776,
-  0.014814814814814815,
-  0.0,
-  0.0,
-  0.0,
-  0.0,
-  0.03518518518518518,
-  0.18501683501683502,
-  0.0,
-  0.11380471380471383,
-  0.0,
-  0.061952861952861954,
-  0.09696969696969698,
-  0.4644781144781145],
-'3p3_4p2': [0,
+'elt': [0,
   0,
   0,
   0.0188944388944389,
@@ -180,7 +128,7 @@ train_dist_arch = {
   0.014988086636961976,
   0.007215957571466534,
   0.005213194798593199],
-'3p2_4_3_4': [0,
+'sns': [0,
   0,
   0,
   0,
@@ -201,70 +149,7 @@ train_dist_arch = {
   0.07683580977490156,
   0.056802394583352525,
   0.06018487241404317],
-'3p4_6': [0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0.032558768518375816,
-  0.0398545685993813,
-  0.07916089165626333,
-  0.19792499600101693,
-  0.08072135334100095,
-  0.23016958461834078,
-  0.07431944320123082,
-  0.060312917951507804,
-  0.04750652761228614,
-  0.04465673096978262,
-  0.050501718948393066,
-  0.06231249858242057],
-'3_4_6_4': [0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0.004633189897270612,
-  0.024305153753921782,
-  0.03833441684749035,
-  0.08781865302396812,
-  0.18187895660994433,
-  0.2308715195845152,
-  0.12383072251502081,
-  0.06498226728985446,
-  0.07205343331438231,
-  0.06319156426920752,
-  0.03383469294272217,
-  0.07426542995170213],
-'3_12p2': [0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0.004341736694677871,
-  0.031127450980392157,
-  0.04543657579310793,
-  0.12538535763142467,
-  0.18885699628688685,
-  0.15779407693309883,
-  0.16104752947690704,
-  0.15840682203113804,
-  0.12760345417236663],
-'4_8p2': [0,
+'tsq': [0,
   0,
   0,
   0,
@@ -285,6 +170,90 @@ train_dist_arch = {
   0.09359310249907848,
   0.08758846635466414,
   0.09420186663039029],
+'srt': [0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0.004633189897270612,
+  0.024305153753921782,
+  0.03833441684749035,
+  0.08781865302396812,
+  0.18187895660994433,
+  0.2308715195845152,
+  0.12383072251502081,
+  0.06498226728985446,
+  0.07205343331438231,
+  0.06319156426920752,
+  0.03383469294272217,
+  0.07426542995170213],
+'snh': [0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0.032558768518375816,
+  0.0398545685993813,
+  0.07916089165626333,
+  0.19792499600101693,
+  0.08072135334100095,
+  0.23016958461834078,
+  0.07431944320123082,
+  0.060312917951507804,
+  0.04750652761228614,
+  0.04465673096978262,
+  0.050501718948393066,
+  0.06231249858242057],
+'trh': [0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0.004341736694677871,
+  0.031127450980392157,
+  0.04543657579310793,
+  0.12538535763142467,
+  0.18885699628688685,
+  0.15779407693309883,
+  0.16104752947690704,
+  0.15840682203113804,
+  0.12760345417236663],
+'grt': [0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0.5,
+  0.0,
+  0.5],
 'lieb': [0,
   0,
   0,
@@ -395,7 +364,10 @@ def vector_to_line_equation(vector, points):
     
     return torch.stack([a.expand_as(b), b], dim=1)
 
-class AL_Template():
+class SC_Base():
+    """
+    Base class for structural constraints
+    """
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         self.bond_len = bond_len
         self.num_atom = num_atom
@@ -405,7 +377,10 @@ class AL_Template():
         self.mask_l = torch.tensor([[1,1,0]]) 
 
 
-class AL_Triangular(AL_Template):
+class SC_Triangular(SC_Base):
+    """
+    Triangular lattice
+    """
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 1
@@ -417,7 +392,7 @@ class AL_Triangular(AL_Template):
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
 
-class AL_Honeycomb(AL_Template):
+class SC_Honeycomb(SC_Base):
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 2
@@ -428,7 +403,7 @@ class AL_Honeycomb(AL_Template):
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
-class AL_Kagome(AL_Template):
+class SC_Kagome(SC_Base):
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 3
@@ -439,7 +414,7 @@ class AL_Kagome(AL_Template):
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
-class AL_Square(AL_Template):
+class SC_Square(SC_Base):
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 1
@@ -450,22 +425,7 @@ class AL_Square(AL_Template):
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = square_cell(self.a_len, self.c_len, self.device)
 
-class AL_4_8p2(AL_Template): 
-    def __init__(self, bond_len, num_atom, type_known, frac_z, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, device)
-        self.num_known = 4
-        x = 1/(2+math.sqrt(2))
-        self.frac_known = torch.tensor([[x, 0.0, self.frac_z],
-                                        [1-x, 0.0, self.frac_z],
-                                        [0.0, x, self.frac_z],
-                                        [0.0, 1-x, self.frac_z]])
-        self.a_len = (1+math.sqrt(2))*self.bond_len
-        self.c_len = 1 * self.bond_len
-        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
-        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
-        self.cell = square_cell(self.a_len, self.c_len, self.device)
-
-class AL_3p3_4p2(AL_Template): 
+class SC_ElongatedTriangular(SC_Base): 
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 2
@@ -480,7 +440,7 @@ class AL_3p3_4p2(AL_Template):
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = lattice3d
 
-class AL_3p2_4_3_4(AL_Template): 
+class SC_SnubSquare(SC_Base): 
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 4
@@ -501,52 +461,22 @@ class AL_3p2_4_3_4(AL_Template):
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = square_cell(self.a_len, self.c_len, self.device)
 
-class AL_3p4_6(AL_Template): 
+class SC_TruncatedSquare(SC_Base): 
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
-        self.num_known = 6
-        lattice2d = torch.tensor([[4., 2*math.sqrt(3)], 
-                                [-5., math.sqrt(3)]])*bond_len/2
-        coords2d = torch.tensor([[1., math.sqrt(3)], 
-                                [2., 2*math.sqrt(3)],
-                                [-1., math.sqrt(3)],
-                                [0., 2*math.sqrt(3)],
-                                [-3., math.sqrt(3)],
-                                [-2, 2*math.sqrt(3)]])*bond_len/2
-        # self.lat2d = lattice2d
-        # self.cart2d = coords2d
-        self.frac_known = torch.cat([cart2frac(coords2d, lattice2d), self.frac_z*torch.ones((self.num_known, 1))], dim=-1)
-        self.a_len = lattice2d.norm(dim=-1).mean()
-        self.c_len = self.a_len
+        self.num_known = 4
+        x = 1/(2+math.sqrt(2))
+        self.frac_known = torch.tensor([[x, 0.0, self.frac_z],
+                                        [1-x, 0.0, self.frac_z],
+                                        [0.0, x, self.frac_z],
+                                        [0.0, 1-x, self.frac_z]])
+        self.a_len = (1+math.sqrt(2))*self.bond_len
+        self.c_len = 1 * self.bond_len
         self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
-        self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
+        self.cell = square_cell(self.a_len, self.c_len, self.device)
 
-class AL_4_6_12(AL_Template): 
-    def __init__(self, bond_len, num_atom, type_known, frac_z, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, device)
-        self.num_known = 12
-        s = bond_len
-        a = s * (3+math.sqrt(3))
-        lattice2d = torch.tensor([[a, 0.], [a*math.cos(2*math.pi/3), a*math.sin(2*math.pi/3)]])
-        vec_flip = lattice2d.mean(dim=0)
-        line = vector_to_line_equation(vec_flip, torch.tensor([[0., 0.]]))[0]
-        angles = torch.linspace(0, 2 * torch.pi, steps=7)[:-1]  # [0, 60, 120, ..., 300] degrees
-        # Coordinates calculation
-        x = s * torch.cos(angles)
-        y = s * torch.sin(angles)
-        # Stack coordinates in pairs
-        coords = torch.stack((x, y), dim=1) + torch.tensor([[0.5*a, 0.5*a/math.sqrt(3)]])
-        coords_refl = reflect_across_line(coords, line)
-        self.frac_known = torch.cat([cart2frac(torch.cat([coords, coords_refl], dim=0), lattice2d), self.frac_z*torch.ones((self.num_known, 1))], dim=-1)
-        self.a_len = a
-        self.c_len = a
-        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
-        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
-        self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
-
-
-class AL_3_4_6_4(AL_Template): 
+class SC_SmallRhombotrihexagonal(SC_Base): 
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 6
@@ -567,7 +497,28 @@ class AL_3_4_6_4(AL_Template):
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
-class AL_3_12p2(AL_Template): 
+class SC_SnubHexagonal(SC_Base): 
+    def __init__(self, bond_len, num_atom, type_known, frac_z, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, device)
+        self.num_known = 6
+        lattice2d = torch.tensor([[4., 2*math.sqrt(3)], 
+                                [-5., math.sqrt(3)]])*bond_len/2
+        coords2d = torch.tensor([[1., math.sqrt(3)], 
+                                [2., 2*math.sqrt(3)],
+                                [-1., math.sqrt(3)],
+                                [0., 2*math.sqrt(3)],
+                                [-3., math.sqrt(3)],
+                                [-2, 2*math.sqrt(3)]])*bond_len/2
+        # self.lat2d = lattice2d
+        # self.cart2d = coords2d
+        self.frac_known = torch.cat([cart2frac(coords2d, lattice2d), self.frac_z*torch.ones((self.num_known, 1))], dim=-1)
+        self.a_len = lattice2d.norm(dim=-1).mean()
+        self.c_len = self.a_len
+        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
+        self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
+
+class SC_TruncatedHexagonal(SC_Base): 
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 6
@@ -591,7 +542,30 @@ class AL_3_12p2(AL_Template):
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
-class AL_Lieb(AL_Template):
+class SC_GreatRhombotrihexagonal(SC_Base): 
+    def __init__(self, bond_len, num_atom, type_known, frac_z, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, device)
+        self.num_known = 12
+        s = bond_len
+        a = s * (3+math.sqrt(3))
+        lattice2d = torch.tensor([[a, 0.], [a*math.cos(2*math.pi/3), a*math.sin(2*math.pi/3)]])
+        vec_flip = lattice2d.mean(dim=0)
+        line = vector_to_line_equation(vec_flip, torch.tensor([[0., 0.]]))[0]
+        angles = torch.linspace(0, 2 * torch.pi, steps=7)[:-1]  # [0, 60, 120, ..., 300] degrees
+        # Coordinates calculation
+        x = s * torch.cos(angles)
+        y = s * torch.sin(angles)
+        # Stack coordinates in pairs
+        coords = torch.stack((x, y), dim=1) + torch.tensor([[0.5*a, 0.5*a/math.sqrt(3)]])
+        coords_refl = reflect_across_line(coords, line)
+        self.frac_known = torch.cat([cart2frac(torch.cat([coords, coords_refl], dim=0), lattice2d), self.frac_z*torch.ones((self.num_known, 1))], dim=-1)
+        self.a_len = a
+        self.c_len = a
+        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
+        self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
+        self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
+
+class SC_Lieb(SC_Base):
     def __init__(self, bond_len, num_atom, type_known, frac_z, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, device)
         self.num_known = 3
@@ -603,5 +577,9 @@ class AL_Lieb(AL_Template):
         self.cell = square_cell(self.a_len, self.c_len, self.device)
 
 
-al_dict = {'triangular': AL_Triangular, 'honeycomb': AL_Honeycomb, 'kagome': AL_Kagome, 'square': AL_Square, '4_8p2': AL_4_8p2, '3p3_4p2': AL_3p3_4p2, '3p2_4_3_4': AL_3p2_4_3_4, '3p4_6': AL_3p4_6, '4_6_12': AL_4_6_12, '4_6_12_large': AL_4_6_12, '3_4_6_4': AL_3_4_6_4, '3_12p2': AL_3_12p2,'lieb': AL_Lieb}   #!!
-num_known_dict = {'triangular': 1, 'honeycomb': 2, 'kagome': 3, 'square': 1, '4_8p2': 4, '3p3_4p2': 2, '3p2_4_3_4': 4, '3p4_6': 6, '4_6_12': 12, '4_6_12_large': 12, '3_4_6_4': 6, '3_12p2': 6,'lieb': 3}  #!
+al_dict = {'tri': SC_Triangular, 'hon': SC_Honeycomb, 'kag': SC_Kagome, 
+           'sqr': SC_Square, 'elt': SC_ElongatedTriangular, 'sns': SC_SnubSquare, 
+           'tsq': SC_TruncatedSquare, 'srt': SC_SmallRhombotrihexagonal, 'snh': SC_SnubHexagonal, 
+           'trh': SC_TruncatedHexagonal,'grt': SC_GreatRhombotrihexagonal, 'lieb': SC_Lieb}  
+num_known_dict = {'tri': 1, 'hon': 2, 'kag': 3, 'sqr': 1, 'elt': 2, 'sns': 4, 
+                  'tsq': 4, 'srt': 6, 'snh': 6, 'trh': 6, 'grt': 12,'lieb': 3} 
