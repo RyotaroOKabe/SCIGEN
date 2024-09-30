@@ -1,4 +1,4 @@
-_target_: diffcsp.pl_modules.diffusion.CSPDiffusion
+_target_: scigen.pl_modules.diffusion.CSPDiffusion
 time_dim: 256
 latent_dim: 0
 cost_coord: 1.

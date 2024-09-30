@@ -14,7 +14,7 @@ from torch_geometric.nn.models.dimenet import (
 )
 from torch_sparse import SparseTensor
 
-from diffcsp.common.data_utils import (
+from scigen.common.data_utils import (
     get_pbc_distances,
     frac_to_cart_coords,
     radius_graph_pbc_wrapper,

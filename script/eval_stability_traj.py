@@ -30,7 +30,7 @@ else:
 import os, sys
 from os.path import join
 import imageio
-from inpaint.mat_utils import vis_structure, get_pstruct_list, get_traj_pstruct_list, output_gen, str2pmg, pmg2ase, ase2pmg, lattice_params_to_matrix_torch, movie_structs, convert_seconds_short, chemical_symbols, vol_density, get_composition, smact_validity
+from script.mat_utils import vis_structure, get_pstruct_list, get_traj_pstruct_list, output_gen, str2pmg, pmg2ase, ase2pmg, lattice_params_to_matrix_torch, movie_structs, convert_seconds_short, chemical_symbols, vol_density, get_composition, smact_validity
 from ehull_prediction.utils.data import Dataset_InputStability
 from ehull_prediction.utils.model_class import GraphNetworkClassifier, generate_dataframe
 import warnings

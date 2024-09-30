@@ -22,11 +22,11 @@ teacher_forcing_max_epoch: 1000
 
 
 datamodule:
-  _target_: diffcsp.pl_data.datamodule.CrystDataModule
+  _target_: scigen.pl_data.datamodule.CrystDataModule
 
   datasets:
     train:
-      _target_: diffcsp.pl_data.dataset.CrystDataset
+      _target_: scigen.pl_data.dataset.CrystDataset
       name: Formation energy train
       path: ${data.root_path}/train.csv
       save_path: ${data.root_path}/train_ori.pt
@@ -41,7 +41,7 @@ datamodule:
       preprocess_workers: ${data.preprocess_workers}
 
     val:
-      - _target_: diffcsp.pl_data.dataset.CrystDataset
+      - _target_: scigen.pl_data.dataset.CrystDataset
         name: Formation energy val
         path: ${data.root_path}/val.csv
         save_path: ${data.root_path}/val_ori.pt
@@ -56,7 +56,7 @@ datamodule:
         preprocess_workers: ${data.preprocess_workers}
 
     test:
-      - _target_: diffcsp.pl_data.dataset.CrystDataset
+      - _target_: scigen.pl_data.dataset.CrystDataset
         name: Formation energy test
         path: ${data.root_path}/test.csv
         save_path: ${data.root_path}/test_ori.pt

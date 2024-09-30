@@ -21,9 +21,9 @@ import pickle as pkl
 from scipy.stats import gaussian_kde
 from pymatgen.analysis.local_env import CrystalNN
 sys.path.append('../')
-from InpaintCrysDiff.dirs_template import *
+from ..conf_scigen import *
 sys.path.append(ehull_pred_path)
-from inpaint.mat_utils import vis_structure, ase2pmg, chemical_symbols
+from script.mat_utils import vis_structure, ase2pmg, chemical_symbols
 import warnings
 # from m3gnet.models import Relaxer
 for category in (UserWarning, DeprecationWarning):

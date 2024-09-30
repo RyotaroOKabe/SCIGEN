@@ -1,4 +1,4 @@
-_target_: diffcsp.pl_modules.cspnet.CSPNet
+_target_: scigen.pl_modules.cspnet.CSPNet
 hidden_dim: 512
 latent_dim: 0
 max_atoms: 100

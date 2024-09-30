@@ -4,7 +4,7 @@ progress_bar_refresh_rate: 1
 
 wandb:
   name: ${expname}
-  project: diffcsp
+  project: scigen
   entity: null
   log_model: True
   mode: 'online'

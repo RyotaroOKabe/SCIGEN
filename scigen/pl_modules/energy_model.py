@@ -18,13 +18,13 @@ from torch_geometric.utils import to_dense_adj, dense_to_sparse
 from torch.autograd import grad
 from tqdm import tqdm
 
-from diffcsp.common.utils import PROJECT_ROOT
-from diffcsp.common.data_utils import (
+from scigen.common.utils import PROJECT_ROOT
+from scigen.common.data_utils import (
     EPSILON, cart_to_frac_coords, mard, lengths_angles_to_volume, lattice_params_to_matrix_torch,
     frac_to_cart_coords, min_distance_sqr_pbc)
 MAX_ATOMIC_NUM=100
 
-from diffcsp.pl_modules.diff_utils import d_log_p_wrapped_normal
+from scigen.pl_modules.diff_utils import d_log_p_wrapped_normal
 from scipy.optimize import linear_sum_assignment
 
 import pdb

@@ -2,7 +2,7 @@ import torch
 import math
 import random
 from sample import chemical_symbols
-from inpcrysdiff.pl_modules.diffusion_w_type import MAX_ATOMIC_NUM 
+from scigen.pl_modules.diffusion_w_type import MAX_ATOMIC_NUM 
  
 
 arch_nickname = {

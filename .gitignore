@@ -4,6 +4,7 @@ archive/
 figures/
 slurm/
 conf_sg/
+save_tmp/
 dir.py
 multiple_gen.py
 multiple_gen2.py
@@ -17,3 +18,9 @@ multiple_stab.py
 *.sh
 env_sub_torch201-39.yml
 env_sub_torch23-311.yml
+
+.env
+
+# data 
+data/*/*.pt
+data*/*/*.pt

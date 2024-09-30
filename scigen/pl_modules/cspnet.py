@@ -8,7 +8,7 @@ from torch_scatter.composite import scatter_softmax
 from torch_geometric.utils import to_dense_adj, dense_to_sparse
 from einops import rearrange, repeat
 
-from diffcsp.common.data_utils import lattice_params_to_matrix_torch, get_pbc_distances, radius_graph_pbc, frac_to_cart_coords, repeat_blocks
+from scigen.common.data_utils import lattice_params_to_matrix_torch, get_pbc_distances, radius_graph_pbc, frac_to_cart_coords, repeat_blocks
 
 MAX_ATOMIC_NUM=100
 
