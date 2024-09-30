@@ -217,11 +217,11 @@ def sample_scigen(self, batch, diff_ratio = 1.0, step_lr = 1e-5):
 
     batch_size = batch.num_graphs
 
-    l_T_unk, x_T_unk = torch.randn([batch_size, 3, 3]).to(self.device), torch.rand([batch.num_nodes, 3]).to(self.device)    #TODO
+    l_T_unk, x_T_unk = torch.randn([batch_size, 3, 3]).to(self.device), torch.rand([batch.num_nodes, 3]).to(self.device)    
 
     t_T_unk = torch.randn([batch.num_nodes, MAX_ATOMIC_NUM]).to(self.device)    
 
-    l_T_known, x_T_known = torch.randn([batch_size, 3, 3]).to(self.device), torch.rand([batch.num_nodes, 3]).to(self.device)       #TODO
+    l_T_known, x_T_known = torch.randn([batch_size, 3, 3]).to(self.device), torch.rand([batch.num_nodes, 3]).to(self.device)       
     t_T_known = torch.randn([batch.num_nodes, MAX_ATOMIC_NUM]).to(self.device)    
     
     l_0_known, x_0_known = batch.lattice_known, batch.frac_coords_known

@@ -19,15 +19,9 @@ hydra-joblib-launcher==1.1.5
 e3nn==0.5.1
 ```
 
-other libraries 
+other libraries    
 ```
-python==3.9.20   
-torch==2.0.1+cu118   
-torch-geometric==2.3.0   
-pytorch_lightning==1.3.8   
-pymatgen==2023.9.25   
-hydra-core==1.1.0
-hydra-joblib-launcher==1.1.5
+
 ```
 
 

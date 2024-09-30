@@ -121,8 +121,8 @@ for elem in dprof.keys():
         plt.show()
         plt.savefig(join(savedir, f'{elem}_bond_mp20.pdf'))
         plt.close()
-# with open('./data/kde_bond.pkl', 'wb') as file:
-#     pkl.dump(kde_dict, file)
+with open('./data/kde_bond.pkl', 'wb') as file:
+    pkl.dump(kde_dict, file)
 
 #%%
 with open('./data/kde_bond.pkl', 'rb') as file:
