@@ -6,4 +6,5 @@ ehull_pred_path = '/path/to/ehull_prediction'
 ehull_pred_name = 'yymmdd-hhmmss'   # ehull classification model name
 ehull_pred_name2 = 'yymmdd-hhmmss'   # ehull classification model2 name
 
-# job_folder2 = '2023-05-18/mp_20_1'
+api_key = "PvfnzQv5PLh4Lzxz1pScKnAtcmmWVaeU"
+seedn = 42
