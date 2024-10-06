@@ -82,6 +82,10 @@ def diffusion(loader, model, step_lr, save_traj):
 
 
 def main(args):
+    # randomly generate seed for each run
+    # Generate a random seed by combining time and randomness
+    seed = int(time.time() * random.random())
+    print(f"Generated seed: {seed}")
     # load_data if do reconstruction.
     model_path = Path(args.model_path)
     print('args: ', args)   
@@ -95,7 +99,19 @@ def main(args):
 
     print('Evaluate the diffusion model.')
 
-    test_set = SampleDataset(args.dataset, args.max_atom, args.max_atom_factor, args.batch_size * args.num_batches_to_samples, args.bond_sigma_per_mu, args.known_species, args.arch, device)     
+    c_vec_cons = {'clen_factor': args.lz_cons_factor, 'vert': args.lz_cons_vert}
+    test_set = SampleDataset(dataset=args.dataset, 
+                            #  max_atom=args.max_atom, 
+                            natm_range=args.natm_range,
+                            #  max_atom_factor=args.max_atom_factor, 
+                            total_num=args.batch_size * args.num_batches_to_samples, 
+                            bond_sigma_per_mu=args.bond_sigma_per_mu, 
+                            use_min_bond_len=args.use_min_bond_len,
+                            known_species=args.known_species, 
+                            sc_list=args.sc, 
+                            c_vec_cons=c_vec_cons,
+                            seed = seed,
+                            device=device)     
     test_loader = DataLoader(test_set, batch_size = args.batch_size)
 
     step_lr = args.step_lr if args.step_lr >= 0 else recommand_step_lr['gen'][args.dataset]
@@ -108,6 +124,7 @@ def main(args):
         gen_out_name = 'eval_gen.pt'
     else:
         gen_out_name = f'eval_gen_{args.label}.pt'
+    print(f'gen_out_name: {gen_out_name}')
 
     run_time = time.time() - start_time
     total_num = args.batch_size * args.num_batches_to_samples
@@ -129,6 +146,7 @@ def main(args):
         'all_atom_types': all_atom_types,
         'all_lengths': all_lengths,
         'all_angles': all_angles,
+        'seed': seed,
         'time': run_time,
     }, model_path / gen_out_name)
       
@@ -145,11 +163,18 @@ if __name__ == '__main__':
 
     parser.add_argument('--save_traj', default=False, type=bool)    
     
-    parser.add_argument('--max_atom', default=20, type=int)
-    parser.add_argument('--max_atom_factor', default=None, type=float) 
+    # parser.add_argument('--max_atom', default=20, type=int)
+    # input natm_range as a list
+    parser.add_argument('--natm_range', nargs='+', default=[1, 20])
+    # parser.add_argument('--max_atom_factor', default=None, type=float) 
     parser.add_argument('--bond_sigma_per_mu', default=None)   
+    # set the lower bound of bond length with metallic radius
+    parser.add_argument('--use_min_bond_len', default=False, type=bool)
     parser.add_argument('--known_species', nargs='+', default=['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']) 
-    parser.add_argument('--arch', nargs='+', default=['kagome', 'honeycomb', 'triangular', 'square']) 
+    parser.add_argument('--sc', nargs='+', default=['kagome', 'honeycomb', 'triangular', 'square']) 
+    parser.add_argument('--lz_cons_factor', default=None, type=float)   # factor to multiply the bond_len for the LZ constraint
+    parser.add_argument('--lz_cons_vert', default=False, type=bool) # whether to use the LZ constraint for vertical bonds
+    
     
     args = parser.parse_args()
 

@@ -19,13 +19,37 @@ import chemparse
 import numpy as np
 import math 
 import random   
-from sample import chemical_symbols
 from p_tqdm import p_map
 import pickle as pkl
 import pdb
 import os
 from scigen.pl_modules.diffusion_w_type import MAX_ATOMIC_NUM  
 
+chemical_symbols = [
+    # 0
+    'X',
+    # 1
+    'H', 'He',
+    # 2
+    'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
+    # 3
+    'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
+    # 4
+    'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
+    'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr',
+    # 5
+    'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd',
+    'In', 'Sn', 'Sb', 'Te', 'I', 'Xe',
+    # 6
+    'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
+    'Ho', 'Er', 'Tm', 'Yb', 'Lu',
+    'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi',
+    'Po', 'At', 'Rn',
+    # 7
+    'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk',
+    'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr',
+    'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc',
+    'Lv', 'Ts', 'Og']
 
 train_dist = {
     'perov_5' : [0, 0, 0, 0, 0, 1],
@@ -78,7 +102,7 @@ train_dist = {
     'uniform' : [0.0] + [1.0]*30
 }
 # combine two dictionary into one
-train_dist = {**train_dist, **train_dist_arch}
+train_dist = {**train_dist, **train_dist_sc}
 
 # reference of metallic radii: https://www.sciencedirect.com/science/article/pii/0022190273803574
 metallic_radius = {'Mn': 1.292, 'Fe': 1.277, 'Co': 1.250, 'Ni': 1.246, 'Ru': 1.339, 'Nd': 1.821, 'Gd': 1.802, 'Tb': 1.781, 'Dy': 1.773, 'Yb': 1.940}
@@ -93,28 +117,34 @@ def convert_seconds_short(sec):
 
 
 class SampleDataset(Dataset):      
-    def __init__(self, dataset, max_atom, max_atom_factor, total_num, bond_sigma_per_mu, known_species, arch_type, device):
+    def __init__(self, dataset, natm_range, total_num, bond_sigma_per_mu, use_min_bond_len, known_species, sc_list, c_vec_cons, seed, device):
         super().__init__()
+        self.seed = seed
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        # get self.natm_min, self.natm_max by first convert natm_range into a list of integers, and get min and max
+        self.natm_range = sorted([int(i) for i in natm_range])
+        self.natm_min, self.natm_max = self.natm_range[0], self.natm_range[-1]
+        print('natm_range: ', [self.natm_min, self.natm_max])
         self.total_num = total_num 
         self.bond_sigma_per_mu = bond_sigma_per_mu     
+        self.use_min_bond_len = use_min_bond_len
         self.known_species = known_species   
-        self.arch_options = arch_type     
-        # replace '4_6_12' with '4_6_12_large' if max_atom > 20
-        # self.arch_options = ['4_6_12_large' if arch == '4_6_12' and (max_atom > 20 or max_atom_factor > 2) else arch for arch in self.arch_options]
+        self.sc_options = sc_list   
+        self.sc_list = random.choices(self.sc_options, k=self.total_num)  
+        self.c_vec_cons = c_vec_cons
         self.device = device
-        self.arch_list = random.choices(self.arch_options, k=self.total_num)
-        if max_atom_factor is not None: 
-            self.max_atom_dict = {arch: math.ceil(max_atom_factor * num_known_dict[arch]) for arch in self.arch_options}
-        else: 
-            self.max_atom_dict = {arch: max_atom for arch in self.arch_options} 
+
         if dataset == 'uniform':  
-            self.distributions_dict = {arch: train_dist[dataset][:self.max_atom_dict[arch]+1] for arch in self.arch_options}  
+            self.distributions_dict = {sc: train_dist[dataset][self.natm_min:self.natm_max+1] for sc in self.sc_options} 
         else:
-            self.distributions_dict = {arch: train_dist[arch][:self.max_atom_dict[arch]+1] for arch in self.arch_options}  
-        print('max_atom_dict: ', self.max_atom_dict)
+            self.distributions_dict = {sc: train_dist[sc][self.natm_min:self.natm_max+1] for sc in self.sc_options}  
+        
+        print('natm_range: ', [self.natm_min, self.natm_max])
         print('distributions_dict: ', self.distributions_dict)
         self.type_known_list = random.choices(self.known_species, k=self.total_num)
-        self.num_known_list =[num_known_dict[arch] for arch in self.arch_list]
+        self.num_known_list =[num_known_dict[sc] for sc in self.sc_list]
         if self.bond_sigma_per_mu is not None:  
             print('Sample bond length from Gaussian')
             self.radii_list = [metallic_radius[s] for s in self.type_known_list]
@@ -124,7 +154,11 @@ class SampleDataset(Dataset):
         else:
             print('Sample bond length from KDE')
             # self.bond_len_list = [kde_dict[s].resample(1).item() for s in self.type_known_list]
-            self.bond_len_list = [max(kde_dict[s].resample(1).item(), 2*metallic_radius[s]) for s in self.type_known_list]
+            self.min_bond_len_dict = {elem: 0 for elem in chemical_symbols}
+            if use_min_bond_len:
+                for k, v in metallic_radius.items():
+                    self.min_bond_len_dict[k] = 2*v
+            self.bond_len_list = [max(kde_dict[s].resample(1).item(), self.min_bond_len_dict[s]) for s in self.type_known_list]
         self.frac_z_known_list = [random.uniform(0, 1) for _ in range(self.total_num)]
         self.is_carbon = dataset == 'carbon_24' 
 
@@ -133,9 +167,9 @@ class SampleDataset(Dataset):
         self.lattice_list = []
         self.mask_x_list, self.mask_t_list, self.mask_l_list =  [], [], [] 
         self.get_num_atoms()
-        for i, (num_atom, arch, type_known, bond_len, frac_z_known) in enumerate(zip(self.num_atom_list, self.arch_list, self.type_known_list, self.bond_len_list, self.frac_z_known_list)):
-            al_obj = al_dict[arch]
-            material = al_obj(bond_len, num_atom, type_known, frac_z_known, self.device)
+        for i, (num_atom, sc, type_known, bond_len, frac_z_known) in enumerate(zip(self.num_atom_list, self.sc_list, self.type_known_list, self.bond_len_list, self.frac_z_known_list)):
+            sc_obj = al_dict[sc] 
+            material = sc_obj(bond_len, num_atom, type_known, frac_z_known, self.c_vec_cons, self.device)    #TODO: add option about c_len factor and mask_l
             self.frac_coords_list.append(material.frac_coords)
             self.atom_types_list.append(material.atom_types)
             self.lattice_list.append(material.cell)
@@ -147,8 +181,8 @@ class SampleDataset(Dataset):
         
     def get_num_atoms(self):
         self.num_atom_list = []
-        for (n_kn, arch) in zip(self.num_known_list, self.arch_list):    
-            type_distribution = self.distributions_dict[arch].copy()
+        for (n_kn, sc) in zip(self.num_known_list, self.sc_list):    
+            type_distribution = self.distributions_dict[sc].copy()
             # Set the first n elements to 0
             type_distribution[:n_kn+1] = [0] * (n_kn + 1)
             sum_p = sum(type_distribution)
