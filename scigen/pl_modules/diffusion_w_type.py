@@ -226,13 +226,28 @@ def sample_scigen(self, batch, diff_ratio = 1.0, step_lr = 1e-5):
     
     l_0_known, x_0_known = batch.lattice_known, batch.frac_coords_known
     t_0_known = F.one_hot(batch.atom_types_known - 1, num_classes=MAX_ATOMIC_NUM).float()
-    mask_l, mask_x, mask_t = batch.mask_l, batch.mask_x, batch.mask_t   
-    mask_x_inv, mask_l_inv, mask_t_inv = 1 - mask_x, 1 - mask_l, 1 - mask_t
     
-    x_T = mask_x.unsqueeze(-1) * x_T_known + mask_x_inv.unsqueeze(-1) * x_T_unk     
-    l_T = mask_l.unsqueeze(-1) * l_T_known + mask_l_inv.unsqueeze(-1) * l_T_unk     
-    t_T = mask_t.unsqueeze(-1) * t_T_known + mask_t_inv.unsqueeze(-1) * t_T_unk     
+    mask_l, mask_x, mask_t = batch.mask_l, batch.mask_x, batch.mask_t   
+    if len(mask_l.shape) == 2:
+        print('Use reduce mask')
+        mask_x, mask_l, mask_t = mask_x.unsqueeze(-1), mask_l.unsqueeze(-1), mask_t.unsqueeze(-1)
+    else: 
+        print('Use complete mask')
+        mask_x, mask_t = mask_x.unsqueeze(-1), mask_t.unsqueeze(-1)
+    mask_x_inv, mask_l_inv, mask_t_inv = 1 - mask_x, 1 - mask_l, 1 - mask_t
 
+    print('num_atoms: ', batch.num_atoms)
+    print('mask_x, x_T_known, x_T_unk: ', mask_x.shape, x_T_known.shape, x_T_unk.shape) 
+    print('mask_l, l_T_known, l_T_unk: ', mask_l.shape, l_T_known.shape, l_T_unk.shape)
+    
+    # x_T = mask_x.unsqueeze(-1) * x_T_known + mask_x_inv.unsqueeze(-1) * x_T_unk    
+    # l_T = mask_l.unsqueeze(-1) * l_T_known + mask_l_inv.unsqueeze(-1) * l_T_unk    #TODO: change the dimension from (N, 3) to (N, 3, 3) 
+    # t_T = mask_t.unsqueeze(-1) * t_T_known + mask_t_inv.unsqueeze(-1) * t_T_unk  
+    x_T = mask_x * x_T_known + mask_x_inv * x_T_unk    
+    l_T = mask_l * l_T_known + mask_l_inv * l_T_unk    #TODO: change the dimension from (N, 3) to (N, 3, 3) 
+    t_T = mask_t * t_T_known + mask_t_inv * t_T_unk  
+
+        
     if self.keep_coords:
         x_T = batch.frac_coords
 
@@ -310,12 +325,11 @@ def sample_scigen(self, batch, diff_ratio = 1.0, step_lr = 1e-5):
         l_t_minus_05_known = C0_minus_0 * l_0_known + C1_minus_0 * rand_l_known   
         t_t_minus_05_known = C0_minus_0 * t_0_known + C1_minus_0 * rand_t_known   
 
-        x_t_minus_05 = mask_x.unsqueeze(-1) * x_t_minus_05_known + mask_x_inv.unsqueeze(-1) * x_t_minus_05_unk  
-        l_t_minus_05 = mask_l.unsqueeze(-1) * l_t_minus_05_known + mask_l_inv.unsqueeze(-1) * l_t_minus_05_unk   
-        t_t_minus_05 = mask_t.unsqueeze(-1) * t_t_minus_05_known + mask_t_inv.unsqueeze(-1) * t_t_minus_05_unk   
+        x_t_minus_05 = mask_x * x_t_minus_05_known + mask_x_inv * x_t_minus_05_unk  
+        l_t_minus_05 = mask_l * l_t_minus_05_known + mask_l_inv * l_t_minus_05_unk   
+        t_t_minus_05 = mask_t * t_t_minus_05_known + mask_t_inv * t_t_minus_05_unk   
         
-        
-
+    
         # Predictor
 
         rand_l = torch.randn_like(l_T) if t > 1 else torch.zeros_like(l_T)
@@ -345,9 +359,9 @@ def sample_scigen(self, batch, diff_ratio = 1.0, step_lr = 1e-5):
         l_t_minus_1_known = C0_minus_1 * l_0_known + C1_minus_1 * rand_l_known   
         t_t_minus_1_known = C0_minus_1 * t_0_known + C1_minus_1 * rand_t_known   
 
-        x_t_minus_1 = mask_x.unsqueeze(-1) * x_t_minus_1_known + mask_x_inv.unsqueeze(-1) * x_t_minus_1_unk  
-        l_t_minus_1 = mask_l.unsqueeze(-1) * l_t_minus_1_known + mask_l_inv.unsqueeze(-1) * l_t_minus_1_unk   
-        t_t_minus_1 = mask_t.unsqueeze(-1) * t_t_minus_1_known + mask_t_inv.unsqueeze(-1) * t_t_minus_1_unk   
+        x_t_minus_1 = mask_x * x_t_minus_1_known + mask_x_inv * x_t_minus_1_unk  
+        l_t_minus_1 = mask_l * l_t_minus_1_known + mask_l_inv * l_t_minus_1_unk   
+        t_t_minus_1 = mask_t * t_t_minus_1_known + mask_t_inv * t_t_minus_1_unk   
 
         traj[t - 1] = {
             'num_atoms' : batch.num_atoms,

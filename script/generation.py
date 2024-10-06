@@ -99,17 +99,18 @@ def main(args):
 
     print('Evaluate the diffusion model.')
 
-    c_vec_cons = {'clen_factor': args.lz_cons_factor, 'vert': args.lz_cons_vert}
+    c_vec_cons = {'scale': args.c_scale, 'vert': args.c_vert}
     test_set = SampleDataset(dataset=args.dataset, 
                             #  max_atom=args.max_atom, 
                             natm_range=args.natm_range,
-                            #  max_atom_factor=args.max_atom_factor, 
+                            #  max_atom_scale=args.max_atom_scale, 
                             total_num=args.batch_size * args.num_batches_to_samples, 
                             bond_sigma_per_mu=args.bond_sigma_per_mu, 
                             use_min_bond_len=args.use_min_bond_len,
                             known_species=args.known_species, 
                             sc_list=args.sc, 
                             c_vec_cons=c_vec_cons,
+                            reduced_mask=args.reduced_mask,
                             seed = seed,
                             device=device)     
     test_loader = DataLoader(test_set, batch_size = args.batch_size)
@@ -166,14 +167,15 @@ if __name__ == '__main__':
     # parser.add_argument('--max_atom', default=20, type=int)
     # input natm_range as a list
     parser.add_argument('--natm_range', nargs='+', default=[1, 20])
-    # parser.add_argument('--max_atom_factor', default=None, type=float) 
+    # parser.add_argument('--max_atom_scale', default=None, type=float) 
     parser.add_argument('--bond_sigma_per_mu', default=None)   
     # set the lower bound of bond length with metallic radius
     parser.add_argument('--use_min_bond_len', default=False, type=bool)
     parser.add_argument('--known_species', nargs='+', default=['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']) 
     parser.add_argument('--sc', nargs='+', default=['kagome', 'honeycomb', 'triangular', 'square']) 
-    parser.add_argument('--lz_cons_factor', default=None, type=float)   # factor to multiply the bond_len for the LZ constraint
-    parser.add_argument('--lz_cons_vert', default=False, type=bool) # whether to use the LZ constraint for vertical bonds
+    parser.add_argument('--c_scale', default=None, type=float)   # scale to multiply the bond_len for the LZ constraint
+    parser.add_argument('--c_vert', default=False, type=bool) # whether to use the LZ constraint for vertical bonds
+    parser.add_argument('--reduced_mask', default=False, type=bool) # whether to use reduced mask
     
     
     args = parser.parse_args()

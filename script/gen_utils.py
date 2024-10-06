@@ -117,7 +117,7 @@ def convert_seconds_short(sec):
 
 
 class SampleDataset(Dataset):      
-    def __init__(self, dataset, natm_range, total_num, bond_sigma_per_mu, use_min_bond_len, known_species, sc_list, c_vec_cons, seed, device):
+    def __init__(self, dataset, natm_range, total_num, bond_sigma_per_mu, use_min_bond_len, known_species, sc_list, c_vec_cons, reduced_mask, seed, device):
         super().__init__()
         self.seed = seed
         random.seed(seed)
@@ -134,6 +134,7 @@ class SampleDataset(Dataset):
         self.sc_options = sc_list   
         self.sc_list = random.choices(self.sc_options, k=self.total_num)  
         self.c_vec_cons = c_vec_cons
+        self.reduced_mask = reduced_mask
         self.device = device
 
         if dataset == 'uniform':  
@@ -169,7 +170,7 @@ class SampleDataset(Dataset):
         self.get_num_atoms()
         for i, (num_atom, sc, type_known, bond_len, frac_z_known) in enumerate(zip(self.num_atom_list, self.sc_list, self.type_known_list, self.bond_len_list, self.frac_z_known_list)):
             sc_obj = al_dict[sc] 
-            material = sc_obj(bond_len, num_atom, type_known, frac_z_known, self.c_vec_cons, self.device)    #TODO: add option about c_len factor and mask_l
+            material = sc_obj(bond_len, num_atom, type_known, frac_z_known, self.c_vec_cons, self.reduced_mask, self.device)    #TODO: add option about c_len scale and mask_l
             self.frac_coords_list.append(material.frac_coords)
             self.atom_types_list.append(material.atom_types)
             self.lattice_list.append(material.cell)

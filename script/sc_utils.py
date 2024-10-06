@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 import math
 import random
 from sample import chemical_symbols
@@ -329,7 +330,7 @@ def frac_coords_all(n_atm, frac_known):
     fcoords, mask = fcoords_zero.clone(), fcoords_zero.clone()
     fcoords[:n_kn, :] = frac_known
     mask[:n_kn, :] = torch.ones_like(frac_known) 
-    mask = mask[:, 0].flatten()
+    mask = mask[:, 0].flatten()   #TODO: mask dimension must be (N, 3), which was transformed  from (N,) in the original code
     return fcoords, mask
 
 def atm_types_all(n_atm, n_kn, type_known):
@@ -340,6 +341,17 @@ def atm_types_all(n_atm, n_kn, type_known):
     mask = torch.zeros_like(types)
     mask[:n_kn] = 1
     return types, mask
+
+mask_l_reduced = torch.tensor([[1, 1, 0]])   #TODO: remove this line after making sure the mask_l is a (3,3) tensor
+mask_l_reduced_full = torch.tensor([[1, 1, 1]])
+mask_l_default = torch.tensor([[[1, 1, 1], 
+                               [1, 1, 1], 
+                               [0, 0, 0]]])   
+mask_l_cvert = torch.tensor([[[1, 1, 1], 
+                            [1, 1, 1], 
+                            [1, 1, 0]]])
+mask_l_full = torch.ones(3, 3, dtype=torch.int)
+
 
 def cart2frac(cart_coords, lattice_matrix): 
     """
@@ -398,22 +410,42 @@ class SC_Base():
     """
     Base class for structural constraints
     """
-    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, device):
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
         self.bond_len = bond_len
         self.num_atom = num_atom
         self.type_known = type_known
         self.frac_z = frac_z
         self.c_vec_cons = c_vec_cons
+        self.reduced_mask = reduced_mask
         self.device = device
-        self.mask_l = torch.tensor([[1,1,0]]) 
-
+        # self.mask_l = torch.tensor([[1,1,0]]) #TODO: make mask_l as a (3,3) tensor, not (1,3)
+        self.mask_l = self.get_mask_l()    #TODO: write a function
+        
+    def get_mask_l(self):
+        c_scale, c_vert = self.c_vec_cons['scale'], self.c_vec_cons['vert']
+        if self.reduced_mask:
+            if c_scale is None:
+                self.c_vec_cons['vert'] = False
+                return mask_l_reduced
+            self.c_vec_cons['vert'] = True
+            return mask_l_reduced_full
+        
+        else: 
+            if c_scale is None:
+                if c_vert:
+                    return mask_l_cvert
+                else:
+                    return mask_l_default
+            else:
+                self.c_vec_cons['vert'] = True
+                return mask_l_full
 
 class SC_Triangular(SC_Base):
     """
     Triangular lattice
     """
-    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, device)
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         self.num_known = 1
         self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z]])
         self.a_len = 1 * self.bond_len
@@ -428,8 +460,8 @@ class SC_Triangular(SC_Base):
 
 
 class SC_Honeycomb(SC_Base):
-    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, device)
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         self.num_known = 2
         self.frac_known = torch.tensor([[1/3, 2/3, self.frac_z], [2/3, 1/3, self.frac_z]])
         self.a_len = math.sqrt(3) * self.bond_len
@@ -438,24 +470,29 @@ class SC_Honeycomb(SC_Base):
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
-class SC_Kagome(SC_Base):
-    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, device)
+class SC_Kagome(SC_Base):   #TODO: uuse kagome as the demo class. Apply the changes to the other classes
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
+        # atom types
         self.num_known = 3
-        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z], [0.5, 0.0, self.frac_z], [0.0, 0.5, self.frac_z]])
-        self.a_len = 2 * self.bond_len
-        self.b_len = 2 * self.bond_len
-        self.c_len = 2 * self.bond_len
-        self.lattice_lengths = torch.tensor([self.a_len, self.b_len, self.c_len], dtype=torch.float, device=self.device)
-        self.lattice_angles_d = torch.tensor(hexagonal_angles, dtype=torch.float, device=self.device)
-        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
         self.atom_types, self.mask_t = atm_types_all(self.num_atom, self.num_known, self.type_known)
-        # self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
+        # coords
+        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z], [0.5, 0.0, self.frac_z], [0.0, 0.5, self.frac_z]])
+        self.frac_coords, self.mask_x = frac_coords_all(self.num_atom, self.frac_known)
+        # Lattice 
+        a_scale, b_scale = 2, 2
+        # get the mean of a_scale and b_scale if c_scale is not provided
+        c_scale = c_vec_cons['scale'] if c_vec_cons['scale'] is not None else np.mean([a_scale, b_scale])
+        self.a_len = a_scale * self.bond_len
+        self.b_len = a_scale * self.bond_len
+        self.c_len = c_scale * self.bond_len
+        self.lattice_lengths = torch.tensor([self.a_len, self.b_len, self.c_len], dtype=torch.float, device=self.device)    # lttice lengths in Angstrom
+        self.lattice_angles_d = torch.tensor(hexagonal_angles, dtype=torch.float, device=self.device)   # lattice angles in degrees
         self.cell = lattice_params_to_matrix_xy_torch(self.lattice_lengths.unsqueeze(0), self.lattice_angles_d.unsqueeze(0)).squeeze(0)
 
 class SC_Square(SC_Base):
-    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, device)
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         self.num_known = 1
         self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z]])
         self.a_len = 1 * self.bond_len
@@ -465,8 +502,8 @@ class SC_Square(SC_Base):
         self.cell = square_cell(self.a_len, self.c_len, self.device)
 
 class SC_ElongatedTriangular(SC_Base): 
-    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, device)
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         self.num_known = 2
         a = bond_len
         lattice3d =  torch.tensor([[a, 0., 0.], [a/2, a*(1+math.sqrt(3)/2), 0.], [0., 0., a]])
@@ -480,8 +517,8 @@ class SC_ElongatedTriangular(SC_Base):
         self.cell = lattice3d
 
 class SC_SnubSquare(SC_Base): 
-    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, device)
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         self.num_known = 4
         lat_p0 = torch.tensor([[math.cos(math.pi/12), -math.sin(math.pi/12)]])*bond_len/math.sqrt(2)
         lat_p12 = torch.tensor([[math.sqrt(3)*math.cos(math.pi/6), math.sqrt(3)*math.sin(math.pi/6)], 
@@ -501,8 +538,8 @@ class SC_SnubSquare(SC_Base):
         self.cell = square_cell(self.a_len, self.c_len, self.device)
 
 class SC_TruncatedSquare(SC_Base): 
-    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, device)
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         self.num_known = 4
         x = 1/(2+math.sqrt(2))
         self.frac_known = torch.tensor([[x, 0.0, self.frac_z],
@@ -516,8 +553,8 @@ class SC_TruncatedSquare(SC_Base):
         self.cell = square_cell(self.a_len, self.c_len, self.device)
 
 class SC_SmallRhombotrihexagonal(SC_Base): 
-    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, device)
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         self.num_known = 6
         lattice2d = torch.tensor([[math.sqrt(3), 1.], 
                                 [-math.sqrt(3), 1.]])*bond_len*(1+math.sqrt(3))/2
@@ -537,8 +574,8 @@ class SC_SmallRhombotrihexagonal(SC_Base):
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
 class SC_SnubHexagonal(SC_Base): 
-    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, device)
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         self.num_known = 6
         lattice2d = torch.tensor([[4., 2*math.sqrt(3)], 
                                 [-5., math.sqrt(3)]])*bond_len/2
@@ -558,8 +595,8 @@ class SC_SnubHexagonal(SC_Base):
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
 class SC_TruncatedHexagonal(SC_Base): 
-    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, device)
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         self.num_known = 6
         theta = math.pi/12
         cos_th = math.cos(theta)
@@ -582,8 +619,8 @@ class SC_TruncatedHexagonal(SC_Base):
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
 class SC_GreatRhombotrihexagonal(SC_Base): 
-    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, device)
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         self.num_known = 12
         s = bond_len
         a = s * (3+math.sqrt(3))
@@ -605,8 +642,8 @@ class SC_GreatRhombotrihexagonal(SC_Base):
         self.cell = hexagonal_cell(self.a_len, self.c_len, self.device)
 
 class SC_Lieb(SC_Base):
-    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, device):
-        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, device)
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         self.num_known = 3
         self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z], [0.5, 0.0, self.frac_z], [0.0, 0.5, self.frac_z]])
         self.a_len = 2 * self.bond_len
@@ -620,5 +657,5 @@ al_dict = {'tri': SC_Triangular, 'hon': SC_Honeycomb, 'kag': SC_Kagome,
            'sqr': SC_Square, 'elt': SC_ElongatedTriangular, 'sns': SC_SnubSquare, 
            'tsq': SC_TruncatedSquare, 'srt': SC_SmallRhombotrihexagonal, 'snh': SC_SnubHexagonal, 
            'trh': SC_TruncatedHexagonal,'grt': SC_GreatRhombotrihexagonal, 'lieb': SC_Lieb}  
-num_known_dict = {'tri': 1, 'hon': 2, 'kag': 3, 'sqr': 1, 'elt': 2, 'sns': 4, 
-                  'tsq': 4, 'srt': 6, 'snh': 6, 'trh': 6, 'grt': 12,'lieb': 3} 
+# num_known_dict = {'tri': 1, 'hon': 2, 'kag': 3, 'sqr': 1, 'elt': 2, 'sns': 4, 
+#                   'tsq': 4, 'srt': 6, 'snh': 6, 'trh': 6, 'grt': 12,'lieb': 3} 
