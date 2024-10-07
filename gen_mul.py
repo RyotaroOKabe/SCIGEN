@@ -12,8 +12,10 @@ num_materials = batch_size * num_batches_to_samples
 save_traj_idx = []  # List of indices to save trajectory
 num_run =1
 idx_start = 0
-header = 'sci'
-sc_list = ['kag']  
+c_scale = None 
+c_vert = True
+header = 'v1'
+# sc_list = ['trh']  
 atom_list = ['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']
 ###################
 
@@ -31,18 +33,21 @@ sc_natm_range = {   # max number of atoms in the unit cell
 'grt': [1,20],    # 12 atom
 'lieb': [1,12] # 3 atom
 }
+sc_list = list(sc_natm_range.keys())
 
-for j in range(idx_start, idx_start+num_run):
-    for i, sc in enumerate(sc_list):
+for i, sc in enumerate(sc_list):
+    for j in range(idx_start, idx_start+num_run):
         tag = format(j, '03d')
         save_traj_arg = '--save_traj True' if j in save_traj_idx else ''  # save traj only for the first run
+        # c_scale_arg = f'--c_scale {c_scale}' if c_scale is not None else ''
         label = f"{header+'_' if len(header) > 0 else ''}{sc}{num_materials}_{tag}"
         natm_range = [str(i) for i in sc_natm_range[sc]]
         job_command = f'python script/generation.py --model_path {model_path} \
                     --dataset {dataset} --label {label} --sc {sc} \
                     --batch_size {batch_size} --num_batches_to_samples {num_batches_to_samples}   \
                     --natm_range {" ".join(natm_range)} {save_traj_arg}   \
-                    --known_species {" ".join(atom_list)}'
+                    --known_species {" ".join(atom_list)}   \
+                        --c_scale {c_scale} --c_vert {c_vert}'
         print([i, j], job_command)
         os.system(job_command)
         print([i, j], label, 'done')

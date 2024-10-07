@@ -25,32 +25,6 @@ import pdb
 import os
 from scigen.pl_modules.diffusion_w_type import MAX_ATOMIC_NUM  
 
-chemical_symbols = [
-    # 0
-    'X',
-    # 1
-    'H', 'He',
-    # 2
-    'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
-    # 3
-    'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
-    # 4
-    'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
-    'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr',
-    # 5
-    'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd',
-    'In', 'Sn', 'Sb', 'Te', 'I', 'Xe',
-    # 6
-    'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
-    'Ho', 'Er', 'Tm', 'Yb', 'Lu',
-    'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi',
-    'Po', 'At', 'Rn',
-    # 7
-    'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk',
-    'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr',
-    'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc',
-    'Lv', 'Ts', 'Og']
-
 train_dist = {
     'perov_5' : [0, 0, 0, 0, 0, 1],
     'carbon_24' : [0.0,
@@ -115,6 +89,11 @@ def convert_seconds_short(sec):
     days, hours = divmod(hours, 24)
     return f"{days:02d}:{hours:02d}:{minutes:02d}:{seconds:02d}"
 
+# I am trying to pass None keyword as a command line parameter to a script as follows, if I explicity mention Category=None it works but the moment I switch to sys.argv[1] it fails, any pointers on how to fix this? Please wriite a function that takes a list of strings and returns a dictionary with the key as the first letter of the string and the value as the string itself. If the first letter is already a key, add the string to the list of values.
+def parse_none_or_value(argument, obj=float):
+    if argument == 'None':
+        return None
+    return obj(argument)
 
 class SampleDataset(Dataset):      
     def __init__(self, dataset, natm_range, total_num, bond_sigma_per_mu, use_min_bond_len, known_species, sc_list, c_vec_cons, reduced_mask, seed, device):
@@ -128,7 +107,7 @@ class SampleDataset(Dataset):
         self.natm_min, self.natm_max = self.natm_range[0], self.natm_range[-1]
         print('natm_range: ', [self.natm_min, self.natm_max])
         self.total_num = total_num 
-        self.bond_sigma_per_mu = bond_sigma_per_mu     
+        self.bond_sigma_per_mu = bond_sigma_per_mu
         self.use_min_bond_len = use_min_bond_len
         self.known_species = known_species   
         self.sc_options = sc_list   

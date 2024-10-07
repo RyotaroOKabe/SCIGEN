@@ -28,7 +28,7 @@ import pdb
 import os
 
 from scigen.pl_modules.diffusion_w_type import sample_scigen, MAX_ATOMIC_NUM  
-from gen_utils import SampleDataset, convert_seconds_short
+from gen_utils import SampleDataset, convert_seconds_short, parse_none_or_value
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')   
 
 
@@ -100,12 +100,13 @@ def main(args):
     print('Evaluate the diffusion model.')
 
     c_vec_cons = {'scale': args.c_scale, 'vert': args.c_vert}
+    print('c_vec_cons: ', c_vec_cons)
     test_set = SampleDataset(dataset=args.dataset, 
                             #  max_atom=args.max_atom, 
                             natm_range=args.natm_range,
                             #  max_atom_scale=args.max_atom_scale, 
                             total_num=args.batch_size * args.num_batches_to_samples, 
-                            bond_sigma_per_mu=args.bond_sigma_per_mu, 
+                            bond_sigma_per_mu=args.bond_sigma_per_mu,
                             use_min_bond_len=args.use_min_bond_len,
                             known_species=args.known_species, 
                             sc_list=args.sc, 
@@ -172,8 +173,8 @@ if __name__ == '__main__':
     # set the lower bound of bond length with metallic radius
     parser.add_argument('--use_min_bond_len', default=False, type=bool)
     parser.add_argument('--known_species', nargs='+', default=['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']) 
-    parser.add_argument('--sc', nargs='+', default=['kagome', 'honeycomb', 'triangular', 'square']) 
-    parser.add_argument('--c_scale', default=None, type=float)   # scale to multiply the bond_len for the LZ constraint
+    parser.add_argument('--sc', nargs='+', default=['kag', 'hon', 'tri', 'sqr']) 
+    parser.add_argument('--c_scale', default=None)   # scale to multiply the bond_len for the LZ constraint
     parser.add_argument('--c_vert', default=False, type=bool) # whether to use the LZ constraint for vertical bonds
     parser.add_argument('--reduced_mask', default=False, type=bool) # whether to use reduced mask
     
