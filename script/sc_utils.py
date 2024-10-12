@@ -346,7 +346,9 @@ mask_l_cvert = torch.tensor([[[1, 1, 1],
                             [1, 1, 1], 
                             [1, 1, 0]]])
 mask_l_full = torch.ones(3, 3, dtype=torch.int)
-
+mask_l_zonly = torch.tensor([[[0, 0, 0], 
+                            [0, 0, 0], 
+                            [1, 1, 1]]])
 
 def cart2frac(cart_coords, lattice_matrix): 
     """
@@ -479,10 +481,10 @@ class SC_Triangular(SC_Base):
     def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         # Lattice 
-        self.a_scale, self.b_scale = 1, 1      #TODO: need to set
+        self.a_scale, self.b_scale = 1, 1 
         self.cell = self.get_cell(hexagonal_angles)
         # coords
-        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z]])      #TODO: need to set
+        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z]]) 
         self.num_known = self.frac_known.shape[0]
         self.frac_coords, self.mask_x = self.frac_coords_all()
         # atom types
@@ -492,23 +494,23 @@ class SC_Honeycomb(SC_Base):
     def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         # Lattice 
-        self.a_scale, self.b_scale = math.sqrt(3), math.sqrt(3)     #TODO: need to set
+        self.a_scale, self.b_scale = math.sqrt(3), math.sqrt(3) 
         self.cell = self.get_cell(hexagonal_angles)
         # coords
-        self.frac_known = torch.tensor([[1/3, 2/3, self.frac_z], [2/3, 1/3, self.frac_z]])     #TODO: need to set
+        self.frac_known = torch.tensor([[1/3, 2/3, self.frac_z], [2/3, 1/3, self.frac_z]]) 
         self.num_known = self.frac_known.shape[0]
         self.frac_coords, self.mask_x = self.frac_coords_all()
         # atom types
         self.atom_types, self.mask_t = self.atm_types_all()
 
-class SC_Kagome(SC_Base):   #TODO: uuse kagome as the demo class. Apply the changes to the other classes
+class SC_Kagome(SC_Base): 
     def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         # Lattice 
-        self.a_scale, self.b_scale = 2, 2     #TODO: need to set
+        self.a_scale, self.b_scale = 2, 2 
         self.cell = self.get_cell(hexagonal_angles)
         # coords
-        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z], [0.5, 0.0, self.frac_z], [0.0, 0.5, self.frac_z]])     #TODO: need to set
+        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z], [0.5, 0.0, self.frac_z], [0.0, 0.5, self.frac_z]])  
         self.num_known = self.frac_known.shape[0]
         self.frac_coords, self.mask_x = self.frac_coords_all()
         # atom types
@@ -518,10 +520,10 @@ class SC_Square(SC_Base):
     def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         # Lattice 
-        self.a_scale, self.b_scale = 1, 1     #TODO: need to set
+        self.a_scale, self.b_scale = 1, 1  
         self.cell = self.get_cell(square_angles)
         # coords
-        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z]])    #TODO: need to set
+        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z]]) 
         self.num_known = self.frac_known.shape[0]
         self.frac_coords, self.mask_x = self.frac_coords_all()
         # atom types
@@ -531,9 +533,9 @@ class SC_ElongatedTriangular(SC_Base):
     def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         # Lattice 
-        self.a_scale, self.b_scale = 1, math.sqrt((1/2)**2 + (1 + math.sqrt(3)/2)**2)     #TODO: need to set
-        gamma_deg = math.degrees(math.atan((1 + math.sqrt(3)/2)/(1/2))) #!
-        self.cell = self.get_cell([90, 90, gamma_deg])  #!
+        self.a_scale, self.b_scale = 1, math.sqrt((1/2)**2 + (1 + math.sqrt(3)/2)**2)  
+        gamma_deg = math.degrees(math.atan((1 + math.sqrt(3)/2)/(1/2))) 
+        self.cell = self.get_cell([90, 90, gamma_deg])  
         # coords
         cart_known_xy = torch.tensor([[0., 0.], 
                             [self.bond_len/2, self.bond_len*math.sqrt(3)/2]]).to(self.device)
@@ -555,7 +557,7 @@ class SC_SnubSquare(SC_Base):
         cell_vert1_2_xy = torch.tensor([[math.sqrt(3)*math.cos(Pi/6), math.sqrt(3)*math.sin(Pi/6)], 
                                 [math.cos(Pi*2/3), math.sin(Pi*2/3)]])*(1+math.sqrt(3))*self.bond_len/2
         cell_xy = cell_vert1_2_xy - cell_vert0_xy
-        self.a_scale, self.b_scale = cell_xy.norm(dim=-1)/self.bond_len      #TODO: need to set
+        self.a_scale, self.b_scale = cell_xy.norm(dim=-1)/self.bond_len  
         self.cell = self.get_cell(square_angles)
         # coords
         cart_known_xy = torch.tensor([[math.cos(Pi/6), math.sin(Pi/6)],
@@ -565,7 +567,7 @@ class SC_SnubSquare(SC_Base):
         cart_known_xy = cart_known_xy.to(self.device)
         self.num_known = cart_known_xy.shape[0]
         frac_z_known = self.frac_z*torch.ones((self.num_known, 1))
-        self.frac_known = torch.cat([cart2frac(cart_known_xy.to(device), cell_xy.to(device)), frac_z_known.to(device)], dim=-1)     #TODO: need to set
+        self.frac_known = torch.cat([cart2frac(cart_known_xy.to(device), cell_xy.to(device)), frac_z_known.to(device)], dim=-1)  
         self.frac_coords, self.mask_x = self.frac_coords_all()
         # atom types
         self.atom_types, self.mask_t = self.atm_types_all()
@@ -575,7 +577,7 @@ class SC_TruncatedSquare(SC_Base):
     def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         # Lattice 
-        self.a_scale, self.b_scale = 1+math.sqrt(2), 1+math.sqrt(2)     #TODO: need to set
+        self.a_scale, self.b_scale = 1+math.sqrt(2), 1+math.sqrt(2) 
         self.cell = self.get_cell(square_angles)
         # coords
         x = 1/(2+math.sqrt(2))
@@ -595,7 +597,7 @@ class SC_SmallRhombotrihexagonal(SC_Base):
         # Lattice 
         cell_xy = torch.tensor([[math.cos(Pi/6), math.sin(Pi/6)], 
                                 [math.cos(5*Pi/6), math.sin(5*Pi/6)]])*self.bond_len*(1+math.sqrt(3))
-        self.a_scale, self.b_scale = cell_xy.norm(dim=-1)/self.bond_len       #TODO: need to set
+        self.a_scale, self.b_scale = cell_xy.norm(dim=-1)/self.bond_len  
         self.cell = self.get_cell(hexagonal_angles)
         # coords
         cart_known_xy = torch.tensor([[1., math.sqrt(3)], 
@@ -606,7 +608,7 @@ class SC_SmallRhombotrihexagonal(SC_Base):
                                 [-1, 2+math.sqrt(3)]])*self.bond_len/2
         self.num_known = cart_known_xy.shape[0]
         frac_z_known = self.frac_z*torch.ones((self.num_known, 1))
-        self.frac_known = torch.cat([cart2frac(cart_known_xy.to(device), cell_xy.to(device)), frac_z_known.to(device)], dim=-1)     #TODO: need to set
+        self.frac_known = torch.cat([cart2frac(cart_known_xy.to(device), cell_xy.to(device)), frac_z_known.to(device)], dim=-1)  
         self.frac_coords, self.mask_x = self.frac_coords_all()
         # atom types
         self.atom_types, self.mask_t = self.atm_types_all()
@@ -618,7 +620,7 @@ class SC_SnubHexagonal(SC_Base):
         # Lattice 
         cell_xy = torch.tensor([[4., 2*math.sqrt(3)], 
                                 [-5., math.sqrt(3)]])*self.bond_len/2
-        self.a_scale, self.b_scale = cell_xy.norm(dim=-1)/self.bond_len       #TODO: need to set
+        self.a_scale, self.b_scale = cell_xy.norm(dim=-1)/self.bond_len  
         self.cell = self.get_cell(hexagonal_angles)
         # coords
         cart_known_xy = torch.tensor([[1., math.sqrt(3)], 
@@ -629,12 +631,12 @@ class SC_SnubHexagonal(SC_Base):
                                 [-2, 2*math.sqrt(3)]])*self.bond_len/2
         self.num_known = cart_known_xy.shape[0]
         frac_z_known = self.frac_z*torch.ones((self.num_known, 1))
-        self.frac_known = torch.cat([cart2frac(cart_known_xy.to(device), cell_xy.to(device)), frac_z_known.to(device)], dim=-1)     #TODO: need to set
+        self.frac_known = torch.cat([cart2frac(cart_known_xy.to(device), cell_xy.to(device)), frac_z_known.to(device)], dim=-1) 
         self.frac_coords, self.mask_x = self.frac_coords_all()
         # atom types
         self.atom_types, self.mask_t = self.atm_types_all()
 
-class SC_TruncatedHexagonal(SC_Base):   #TODO: we made some mistake...!
+class SC_TruncatedHexagonal(SC_Base):  
     def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         # Lattice 
@@ -642,7 +644,7 @@ class SC_TruncatedHexagonal(SC_Base):   #TODO: we made some mistake...!
         cos_th = math.cos(theta)
         cell_xy = torch.tensor([[math.cos(Pi/6), math.sin(Pi/6)], 
                                 [math.cos(5*Pi/6), math.sin(5*Pi/6)]])*self.bond_len/math.tan(theta)
-        self.a_scale, self.b_scale = 1/math.tan(theta), 1/math.tan(theta)       #TODO: need to set
+        self.a_scale, self.b_scale = 1/math.tan(theta), 1/math.tan(theta)  
         self.cell = self.get_cell(hexagonal_angles)
         # coords
         cart_known_xy = torch.tensor([[self.a_len/(2*math.sqrt(2)*cos_th), self.a_len/(2*math.sqrt(2)*cos_th)], 
@@ -653,7 +655,7 @@ class SC_TruncatedHexagonal(SC_Base):   #TODO: we made some mistake...!
                                 [-math.cos(5*theta)*self.a_len/(2*cos_th), math.sin(5*theta)*self.a_len/(2*cos_th)]])
         self.num_known = cart_known_xy.shape[0]
         frac_z_known = self.frac_z*torch.ones((self.num_known, 1))
-        self.frac_known = torch.cat([cart2frac(cart_known_xy.to(device), cell_xy.to(device)), frac_z_known.to(device)], dim=-1)     #TODO: need to set
+        self.frac_known = torch.cat([cart2frac(cart_known_xy.to(device), cell_xy.to(device)), frac_z_known.to(device)], dim=-1)  
         self.frac_coords, self.mask_x = self.frac_coords_all()
         # atom types
         self.atom_types, self.mask_t = self.atm_types_all()
@@ -665,7 +667,7 @@ class SC_GreatRhombotrihexagonal(SC_Base):
         super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         # Lattice 
         cell_xy = torch.tensor([[1, 0.], [math.cos(2*Pi/3), math.sin(2*Pi/3)]]) * (3+math.sqrt(3))*self.bond_len
-        self.a_scale, self.b_scale = cell_xy.norm(dim=-1)/self.bond_len       #TODO: need to set
+        self.a_scale, self.b_scale = cell_xy.norm(dim=-1)/self.bond_len  
         self.cell = self.get_cell(hexagonal_angles)
         # coords
         vec_mirror = cell_xy.mean(dim=0)
@@ -679,7 +681,7 @@ class SC_GreatRhombotrihexagonal(SC_Base):
         cart_known_xy = torch.cat([cart_known_xy_half, cart_known_xy_another], dim=0)
         self.num_known = cart_known_xy.shape[0]
         frac_z_known = self.frac_z*torch.ones((self.num_known, 1))
-        self.frac_known = torch.cat([cart2frac(cart_known_xy.to(device), cell_xy.to(device)), frac_z_known.to(device)], dim=-1)    #TODO: need to set
+        self.frac_known = torch.cat([cart2frac(cart_known_xy.to(device), cell_xy.to(device)), frac_z_known.to(device)], dim=-1)  
         self.frac_coords, self.mask_x = self.frac_coords_all()
         # atom types
         self.atom_types, self.mask_t = self.atm_types_all()
@@ -689,10 +691,10 @@ class SC_Lieb(SC_Base):
     def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
         super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
         # Lattice 
-        self.a_scale, self.b_scale = 2, 2     #TODO: need to set
+        self.a_scale, self.b_scale = 2, 2 
         self.cell = self.get_cell(square_angles)
         # coords
-        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z], [0.5, 0.0, self.frac_z], [0.0, 0.5, self.frac_z]])    #TODO: need to set
+        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z], [0.5, 0.0, self.frac_z], [0.0, 0.5, self.frac_z]]) 
         self.num_known = self.frac_known.shape[0]
         self.frac_coords, self.mask_x = self.frac_coords_all()
         # atom types

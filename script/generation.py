@@ -148,6 +148,10 @@ def main(args):
         'all_atom_types': all_atom_types,
         'all_lengths': all_lengths,
         'all_angles': all_angles,
+        'c_vec_cons': c_vec_cons,
+        'sc_list': args.sc,
+        'known_species': args.known_species,
+        'reduce_mask': args.reduced_mask,
         'seed': seed,
         'time': run_time,
     }, model_path / gen_out_name)

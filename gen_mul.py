@@ -6,16 +6,16 @@ from config_scigen import hydra_dir, job_dir
 ############
 model_path = join(hydra_dir, job_dir)
 dataset = 'mp_20'
-batch_size=20
-num_batches_to_samples=2
+batch_size=200
+num_batches_to_samples=250
 num_materials = batch_size * num_batches_to_samples
 save_traj_idx = []  # List of indices to save trajectory
-num_run =1
-idx_start = 0
+num_run =5
+idx_start = 5
 c_scale = None 
 c_vert = True
 header = 'v1'
-# sc_list = ['trh']  
+sc_list = ['kag']  
 atom_list = ['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']
 ###################
 
@@ -33,7 +33,7 @@ sc_natm_range = {   # max number of atoms in the unit cell
 'grt': [1,20],    # 12 atom
 'lieb': [1,12] # 3 atom
 }
-sc_list = list(sc_natm_range.keys())
+# sc_list = list(sc_natm_range.keys())
 
 for i, sc in enumerate(sc_list):
     for j in range(idx_start, idx_start+num_run):
