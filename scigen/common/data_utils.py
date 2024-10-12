@@ -174,7 +174,7 @@ def build_crystal_graph(crystal, graph_method='crystalnn'):
     """
     """
 
-    if graph_method == 'crystalnn':
+    if 'crystalnn' in graph_method: #if graph_method == 'crystalnn':
         try:
             crystal_graph = StructureGraph.with_local_env_strategy(
                 crystal, CrystalNN)
@@ -199,6 +199,12 @@ def build_crystal_graph(crystal, graph_method='crystalnn'):
     edge_indices, to_jimages = [], []
     if graph_method != 'none':
         for i, j, to_jimage in crystal_graph.graph.edges(data='to_jimage'):
+            
+            if '2d' in graph_method:
+                if to_jimage[2] != 0:
+                    # print('ijimage', i, j, to_jimage)
+                    continue
+            
             edge_indices.append([j, i])
             to_jimages.append(to_jimage)
             edge_indices.append([i, j])
