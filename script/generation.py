@@ -167,23 +167,32 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=500, type=int)
     parser.add_argument('--label', default='')
 
-    parser.add_argument('--save_traj', default=False, type=bool)    
-    
+    # Boolean flags with store_true/store_false
+    parser.add_argument('--save_traj', action='store_true', help="Save trajectory during generation")    
+    parser.add_argument('--no_save_traj', action='store_false', dest='save_traj', help="Do not save trajectory during generation")
+
     # parser.add_argument('--max_atom', default=20, type=int)
-    # input natm_range as a list
     parser.add_argument('--natm_range', nargs='+', default=[1, 20])
     # parser.add_argument('--max_atom_scale', default=None, type=float) 
     parser.add_argument('--bond_sigma_per_mu', default=None)   
-    # set the lower bound of bond length with metallic radius
-    parser.add_argument('--use_min_bond_len', default=False, type=bool)
+
+    # Boolean flag with store_true/store_false
+    parser.add_argument('--use_min_bond_len', action='store_true', help="Use minimum bond length with metallic radius")
+    parser.add_argument('--no_use_min_bond_len', action='store_false', dest='use_min_bond_len', help="Do not use minimum bond length")
+
     parser.add_argument('--known_species', nargs='+', default=['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']) 
     parser.add_argument('--sc', nargs='+', default=['kag', 'hon', 'tri', 'sqr']) 
-    parser.add_argument('--c_scale', default=None)   # scale to multiply the bond_len for the LZ constraint
-    parser.add_argument('--c_vert', default=False, type=bool) # whether to use the LZ constraint for vertical bonds
-    parser.add_argument('--reduced_mask', default=False, type=bool) # whether to use reduced mask
-    
-    
-    args = parser.parse_args()
 
+    parser.add_argument('--c_scale', default=None, help="Scale to multiply bond length for LZ constraint") 
+
+    # Boolean flag with store_true/store_false
+    parser.add_argument('--c_vert', action='store_true', help="Use LZ constraint for vertical bonds")
+    parser.add_argument('--no_c_vert', action='store_false', dest='c_vert', help="Do not use LZ constraint for vertical bonds")
+
+    # Boolean flag with store_true/store_false
+    parser.add_argument('--reduced_mask', action='store_true', help="Use reduced mask")
+    parser.add_argument('--no_reduced_mask', action='store_false', dest='reduced_mask', help="Do not use reduced mask")
+
+    args = parser.parse_args()
 
     main(args)

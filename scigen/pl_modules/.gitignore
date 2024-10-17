@@ -27,7 +27,7 @@ data*/*/*.pt
 
 # home
 config_scigen.py
-gen_mul_mt.py
 
 # screening 
 screening/
+diffusion_w_type_mt.py
