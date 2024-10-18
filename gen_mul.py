@@ -10,27 +10,28 @@ num_batches_to_samples = 200
 num_materials = batch_size * num_batches_to_samples
 save_traj_idx = []  # List of indices to save trajectory
 num_run = 2
-idx_start = 3
+idx_start = 0
 c_scale = None
 c_vert = False
 header = 'sc'
-sc_list = ['kag']
+sc_list = ['van']
 atom_list = ['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']
 ###################
 
 sc_natm_range = {   # max number of atoms in the unit cell
-    'tri': [1, 4],    # 1 atom
-    'hon': [1, 8],      # 2 atom
-    'kag': [1, 12],    # 3 atom
-    'sqr': [1, 4],    # 1 atom
-    'elt': [1, 8],    # 2 atom
-    'sns': [1, 16],    # 4 atom
-    'tsq': [1, 16],    # 4 atom
-    'srt': [1, 20],    # 6 atom
-    'snh': [1, 20],    # 6 atom
-    'trh': [1, 20],    # 6 atom
+    'tri': [1, 4],    # 1 atom for triangle
+    'hon': [1, 8],      # 2 atom for honeycomb
+    'kag': [1, 12],    # 3 atom for kagome
+    'sqr': [1, 4],    # 1 atom for square
+    'elt': [1, 8],    # 2 atom for elongated triangle
+    'sns': [1, 16],    # 4 atom for snub square
+    'tsq': [1, 16],    # 4 atom for truncated square
+    'srt': [1, 20],    # 6 atom for small rhombitrihexagonal
+    'snh': [1, 20],    # 6 atom for snub hexagonal
+    'trh': [1, 20],    # 6 atom for 
     'grt': [1, 20],    # 12 atom
-    'lieb': [1, 12]    # 3 atom
+    'lieb': [1, 12],    # 3 atom
+    'van': [1, 20],   
 }
 
 # Handle c_scale argument conditionally

@@ -33,6 +33,27 @@ chemical_symbols = [
     'Lv', 'Ts', 'Og']
 
 train_dist_sc = {
+'van' : [0.0,
+        0.0021742334905660377,
+        0.021079009433962265,
+        0.019826061320754717,
+        0.15271226415094338,
+        0.047132959905660375,
+        0.08464770047169812,
+        0.021079009433962265,
+        0.07808814858490566,
+        0.03434551886792453,
+        0.0972877358490566,
+        0.013303360849056603,
+        0.09669811320754718,
+        0.02155807783018868,
+        0.06522700471698113,
+        0.014372051886792452,
+        0.06703272405660378,
+        0.00972877358490566,
+        0.053176591981132074,
+        0.010576356132075472,
+        0.08995430424528301],
 'tri': [0,
   0,
   0.27976617542482696,
@@ -349,6 +370,7 @@ mask_l_full = torch.ones(3, 3, dtype=torch.int)
 mask_l_zonly = torch.tensor([[[0, 0, 0], 
                             [0, 0, 0], 
                             [1, 1, 1]]])
+mask_l_zeros = torch.zeros(3, 3, dtype=torch.int)
 
 def cart2frac(cart_coords, lattice_matrix): 
     """
@@ -474,6 +496,26 @@ class SC_Base():
         mask[:self.num_known] = 1
         return types, mask
 
+
+class SC_Vanilla(SC_Base):
+    """
+    Vanilla case with no constraints
+    """
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
+        # Lattice 
+        self.a_scale, self.b_scale = 1, 1 
+        self.cell = self.get_cell(square_angles)
+        # coords
+        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z]]) 
+        self.num_known = self.frac_known.shape[0]
+        self.frac_coords, self.mask_x = self.frac_coords_all()
+        # atom types
+        self.atom_types, self.mask_t = self.atm_types_all()
+        self.mask_x = torch.zeros_like(self.mask_x)
+        self.mask_l = torch.zeros_like(self.mask_l)
+        self.mask_t = torch.zeros_like(self.mask_t)
+        
 class SC_Triangular(SC_Base):
     """
     Triangular lattice
@@ -704,6 +746,6 @@ class SC_Lieb(SC_Base):
 al_dict = {'tri': SC_Triangular, 'hon': SC_Honeycomb, 'kag': SC_Kagome, 
            'sqr': SC_Square, 'elt': SC_ElongatedTriangular, 'sns': SC_SnubSquare, 
            'tsq': SC_TruncatedSquare, 'srt': SC_SmallRhombotrihexagonal, 'snh': SC_SnubHexagonal, 
-           'trh': SC_TruncatedHexagonal,'grt': SC_GreatRhombotrihexagonal, 'lieb': SC_Lieb}  
+           'trh': SC_TruncatedHexagonal,'grt': SC_GreatRhombotrihexagonal, 'lieb': SC_Lieb, 'van': SC_Vanilla}  
 num_known_dict = {'tri': 1, 'hon': 2, 'kag': 3, 'sqr': 1, 'elt': 2, 'sns': 4, 
-                  'tsq': 4, 'srt': 6, 'snh': 6, 'trh': 6, 'grt': 12,'lieb': 3} 
+                  'tsq': 4, 'srt': 6, 'snh': 6, 'trh': 6, 'grt': 12,'lieb': 3, 'van': 1} 
