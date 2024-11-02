@@ -439,8 +439,8 @@ class SC_Base():
         self.device = device
         self.a_scale, self.b_scale, self.c_scale = None, None, None     # Initialize lattice scaling wrt self.bond_len
         self.mask_l = self.get_mask_l()    #TODO: write a function
-        print(f"Config for unit cell's c-vector: {self.c_vec_cons}")
-        print(f"The lattice mask: {self.mask_l}")
+        # print(f"Config for unit cell's c-vector: {self.c_vec_cons}")
+        # print(f"The lattice mask: {self.mask_l}")
         self.frac_known = None  # Initialize known fractional coordinates
         self.num_known = None   # Initialize number of known atoms
 

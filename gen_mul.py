@@ -5,16 +5,16 @@ from config_scigen import hydra_dir, job_dir
 ############
 model_path = join(hydra_dir, job_dir)
 dataset = 'mp_20'
-batch_size = 250
-num_batches_to_samples = 200
+batch_size = 10
+num_batches_to_samples = 20
 num_materials = batch_size * num_batches_to_samples
-save_traj_idx = []  # List of indices to save trajectory
-num_run = 2
+save_traj_idx = [0]  # List of indices to save trajectory
+num_run = 1
 idx_start = 0
 c_scale = None
-c_vert = False
+c_vert = True
 header = 'sc'
-sc_list = ['van']
+sc_list = ['tri']
 atom_list = ['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']
 ###################
 
