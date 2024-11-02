@@ -3,7 +3,7 @@
 Implementation codes for crystal structure prediction by Joint equivariant diffusion with structural constraints.  
 
 <p align="center">
-  <img src="assets/scigen_logo.png" width="300">
+  <img src="assets/scigen_logo.png" width="250">
 </p>
 
 <p align="center">
