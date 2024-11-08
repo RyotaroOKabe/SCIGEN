@@ -117,9 +117,9 @@ class SampleDataset(Dataset):
         self.device = device
 
         if dataset == 'uniform':  
-            self.distributions_dict = {sc: train_dist[dataset][self.natm_min:self.natm_max+1] for sc in self.sc_options} 
+            self.distributions_dict = {sc: train_dist[dataset][:self.natm_max+1] for sc in self.sc_options} 
         else:
-            self.distributions_dict = {sc: train_dist[sc][self.natm_min:self.natm_max+1] for sc in self.sc_options}  
+            self.distributions_dict = {sc: train_dist[sc][:self.natm_max+1] for sc in self.sc_options}  
         
         print('natm_range: ', [self.natm_min, self.natm_max])
         print('distributions_dict: ', self.distributions_dict)
@@ -165,7 +165,9 @@ class SampleDataset(Dataset):
             type_distribution = self.distributions_dict[sc].copy()
             # Set the first n elements to 0
             type_distribution[:n_kn+1] = [0] * (n_kn + 1)
+            type_distribution[:self.natm_min] = [0] * self.natm_min
             sum_p = sum(type_distribution)
+            assert sum_p > 0, f"sum_p is {sum_p}, type_distribution: {type_distribution}"
             type_distribution_norm = [p / sum_p for p in type_distribution] 
             num_atom = np.random.choice(len(type_distribution_norm), 1, p = type_distribution_norm)[0]
             self.num_atom_list.append(num_atom)
