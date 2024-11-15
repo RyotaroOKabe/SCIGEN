@@ -6,7 +6,7 @@ from config_scigen import hydra_dir, job_dir
 model_path = join(hydra_dir, job_dir)
 dataset = 'mp_20'
 batch_size = 10 # Number of materials to generate in one batch
-num_batches_to_samples = 20 # Number of batches to sample
+num_batches_to_samples = 2 # Number of batches to sample
 num_materials = batch_size * num_batches_to_samples
 save_traj_idx = []  # List of indices to save trajectory
 num_run = 1 # Number of runs
@@ -14,9 +14,9 @@ idx_start = 0   # Starting index
 c_scale = None  # Scaling factor for c-axis. None for no constraint
 c_vert = False   # Whether to constrain the c-axis to be vertical
 header = 'sc'   # Header for the label
-sc_list = ['tri']   # List of SCs to generate
+sc_list = ['kag']   # List of SCs to generate
 atom_list = ['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']
-save_cif = False # Whether to save CIF files
+save_cif = True # Whether to save CIF files
 ###################
 
 sc_natm_range = {   # Minimum/Maximum number of atoms in the unit cell (*minumum number of atoms is set as min(sc_natm_range[sc][0], num_known_dict[sc]))
@@ -61,5 +61,6 @@ for i, sc in enumerate(sc_list):
         os.system(job_command)
         print([i, j], label, 'done')
         if save_cif:
-            save_cif_command = f'python script/save_cif.py --model_path {model_path} --label {label}'
+            save_cif_command = f'python script/save_cif.py --job_dir {job_dir} --label {label}'
+            os.system(save_cif_command)
         print()

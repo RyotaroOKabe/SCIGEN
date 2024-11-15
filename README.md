@@ -11,7 +11,7 @@ Implementation codes for crystal structure prediction by Joint equivariant diffu
 </p>
 
 ### Dependencies
-
+Version-dependent libraries
 ```
 python==3.9.20   
 torch==2.0.1+cu118   
@@ -25,7 +25,8 @@ e3nn==0.5.1
 
 other libraries    
 ```
-
+smact
+wandb
 ```
 
 # Config setting   
@@ -60,6 +61,13 @@ sc_list = ['tri']   # List of SCs to generate
 atom_list = ['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']
 
 generate_cif = True if you want to generate cif file. (you can run it independently in the next chapter.)
+
+
+Select the lattice types (No constraint, Archimedean Lattice, Lieb lattice)
+<p align="center">
+  <img src="assets/SI_arch_lattice_unit_bk.png" width="400">
+</p>
+
 
 ```
 python gen_mul.py 
