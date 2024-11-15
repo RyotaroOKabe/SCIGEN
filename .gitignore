@@ -32,7 +32,6 @@ conf/data/alex_2d.yaml
 config_scigen.py
 gen_mul_mt.py
 gen_mul_2d.py
-gen_movie.py
 
 # screening 
 screening/
