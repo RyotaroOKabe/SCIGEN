@@ -16,8 +16,7 @@ We present Structural Constraint Integration in the GENerative model (SCIGEN), a
 - [Dependencies](#dependencies)
 - [Config Setting](#config-setting)
 - [Training](#training)
-- [Evaluation Task](#evaluation-task)
-- [Metastable Structure Generation](#metastable-structure-generation)
+- [Material Generation](#material-generation)
 - [Convert Output to CIF Files](#convert-output-to-cif-files)
 - [Generate Movie of Material Generation](#generate-movie-of-material-generation)
 - [References](#references)
@@ -70,7 +69,10 @@ python scigen/run.py data=mp_20 model=diffusion_w_type expname=<expname>
 ---
 
 ## Material Generation
-
+Run the following to generate structures:
+```bash
+python gen_mul.py
+```
 ### Configurations for material generation
 Make a copy of the `config_scigen.template.py` file and rename it to `config_scigen.py`.
 1. Use the pre-trained model:
@@ -95,13 +97,6 @@ hydra_dir = 'path/to/HYDRA_JOBS/singlerun'
 job_dir = 'yyyy-mm-dd/<expname>'
 ```
 
----
-
-## Metastable Structure Generation
-Run the following to generate structures:
-```bash
-python gen_mul.py
-```
 ### Configuration
 
 | Parameter              | Description                                                                                 | Default Value                           |
@@ -142,7 +137,7 @@ python script/save_cif.py --label <out_name>
 
 ---
 
-## Generate Movie of Material Generation Trajectory
+## Make Movies of Material Generation Trajectories
 
 Set `out_name` in `config_scigen.py`, then run: 
 ```bash
