@@ -1,2 +1,10 @@
 archive/
 generation_mt.py
+
+
+# under development 
+crystalnn_bond.py
+eval_stability_traj.py
+eval_stability.py
+
+sample.py

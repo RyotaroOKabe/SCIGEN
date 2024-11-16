@@ -1,29 +1,12 @@
-import time
-import argparse
 import torch
-
 from tqdm import tqdm
-from torch.optim import Adam
-from pathlib import Path
-from types import SimpleNamespace
-from torch_geometric.data import Data, Batch, DataLoader
+from torch_geometric.data import Data
 from torch.utils.data import Dataset
-from eval_utils import load_model, lattices_to_params_shape, get_crystals_list, recommand_step_lr
 from sc_utils import *    
-from pymatgen.core.structure import Structure
-from pymatgen.core.lattice import Lattice
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-from pymatgen.io.cif import CifWriter
-from pyxtal.symmetry import Group
-import chemparse
 import numpy as np
-import math 
 import random   
-from p_tqdm import p_map
 import pickle as pkl
-import pdb
-import os
-from scigen.pl_modules.diffusion_w_type import MAX_ATOMIC_NUM  
+from sc_utils import *  
 
 train_dist = {
     'perov_5' : [0, 0, 0, 0, 0, 1],
@@ -117,22 +100,22 @@ class SampleDataset(Dataset):
         self.device = device
 
         if dataset == 'uniform':  
-            self.distributions_dict = {sc: train_dist[dataset][self.natm_min:self.natm_max+1] for sc in self.sc_options} 
+            self.distributions_dict = {sc: train_dist[dataset][:self.natm_max+1] for sc in self.sc_options} 
         else:
-            self.distributions_dict = {sc: train_dist[sc][self.natm_min:self.natm_max+1] for sc in self.sc_options}  
+            self.distributions_dict = {sc: train_dist[sc][:self.natm_max+1] for sc in self.sc_options}  
         
-        print('natm_range: ', [self.natm_min, self.natm_max])
-        print('distributions_dict: ', self.distributions_dict)
+        # print('natm_range: ', [self.natm_min, self.natm_max])
+        # print('distributions_dict: ', self.distributions_dict)
         self.type_known_list = random.choices(self.known_species, k=self.total_num)
         self.num_known_list =[num_known_dict[sc] for sc in self.sc_list]
         if self.bond_sigma_per_mu is not None:  
-            print('Sample bond length from Gaussian')
+            # print('Sample bond length from Gaussian')
             self.radii_list = [metallic_radius[s] for s in self.type_known_list]
             self.bond_mu_list = [2*r for r in self.radii_list]
             self.bond_sigma_list = [b*self.bond_sigma_per_mu for b in self.bond_mu_list]
             self.bond_len_list = [np.random.normal(self.bond_mu_list[i], self.bond_sigma_list[i]) for i in range(self.total_num)]
         else:
-            print('Sample bond length from KDE')
+            # print('Sample bond length from KDE')
             # self.bond_len_list = [kde_dict[s].resample(1).item() for s in self.type_known_list]
             self.min_bond_len_dict = {elem: 0 for elem in chemical_symbols}
             if use_min_bond_len:
@@ -165,7 +148,9 @@ class SampleDataset(Dataset):
             type_distribution = self.distributions_dict[sc].copy()
             # Set the first n elements to 0
             type_distribution[:n_kn+1] = [0] * (n_kn + 1)
+            type_distribution[:self.natm_min] = [0] * self.natm_min
             sum_p = sum(type_distribution)
+            assert sum_p > 0.0, f"sum_p is {sum_p}, type_distribution: {type_distribution}"
             type_distribution_norm = [p / sum_p for p in type_distribution] 
             num_atom = np.random.choice(len(type_distribution_norm), 1, p = type_distribution_norm)[0]
             self.num_atom_list.append(num_atom)

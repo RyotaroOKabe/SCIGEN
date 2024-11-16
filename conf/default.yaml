@@ -17,7 +17,7 @@ hydra:
   job:
     env_set:
       WANDB_START_METHOD: thread
-      WANDB_DIR: ${oc.env:WABDB_DIR}
+      WANDB_DIR: ${oc.env:WANDB_DIR}
 
 defaults:
   - data: default

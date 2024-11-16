@@ -2,14 +2,9 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import os
-from os import listdir
-from os.path import isfile, join
-from os.path import join as opj
-import pandas as pd
 from tqdm import tqdm
-import pickle as pkl
 from ase import Atoms
-from ase.data import atomic_numbers, atomic_names, atomic_masses, covalent_radii
+from ase.data import covalent_radii
 from copy import copy
 bar_format = '{l_bar}{bar:10}{r_bar}{bar:-10b}'
 api_key = "PvfnzQv5PLh4Lzxz1pScKnAtcmmWVaeU"
@@ -23,11 +18,6 @@ import math
 from copy import copy
 import imageio
 from collections import Counter
-import smact
-from smact.screening import pauling_test
-import itertools
-
-# utilities
 from tqdm import tqdm
 
 # format progress bar
@@ -57,10 +47,7 @@ datasets2 = ['train', 'test']
 colors = dict(zip(datasets, palette[:-1]))
 colors2 = dict(zip(datasets2, palette[:-1]))
 cmap = mpl.colors.LinearSegmentedColormap.from_list('cmap', palette)
-# cmap = mpl.colors.LinearSegmentedColormap.from_list('cmap', [palette[k] for k in [0,2,1]])
 from pymatgen.core.structure import Structure
-from pymatgen.core.periodic_table import Element
-# import mendeleev as md 
 
 chemical_symbols = [
     # 0
@@ -454,7 +441,7 @@ def vol_density(astruct):
     return atoms_volume/(abs(lvol)+1e-4)
 
 
-def get_composition(atom_types):    #!!
+def get_composition(atom_types):    
     elem_counter = Counter(atom_types)
     composition = [(elem, elem_counter[elem])
                     for elem in sorted(elem_counter.keys())]
@@ -465,46 +452,4 @@ def get_composition(atom_types):    #!!
     return elems, comps
 
 
-def smact_validity(comp, count,
-                   use_pauling_test=True,
-                   include_alloys=True):    #!!
-    elem_symbols = tuple([chemical_symbols[elem] for elem in comp])
-    space = smact.element_dictionary(elem_symbols)
-    smact_elems = [e[1] for e in space.items()]
-    electronegs = [e.pauling_eneg for e in smact_elems]
-    ox_combos = [e.oxidation_states for e in smact_elems]
-    if len(set(elem_symbols)) == 1:
-        return True
-    if include_alloys:
-        is_metal_list = [elem_s in smact.metals for elem_s in elem_symbols]
-        if all(is_metal_list):
-            return True
-
-    threshold = np.max(count)
-    compositions = []
-    # if len(list(itertools.product(*ox_combos))) > 1e5:
-    #     return False
-    oxn = 1
-    for oxc in ox_combos:
-        oxn *= len(oxc)
-    if oxn > 1e7:
-        return False
-    for ox_states in itertools.product(*ox_combos):
-        stoichs = [(c,) for c in count]
-        # Test for charge balance
-        cn_e, cn_r = smact.neutral_ratios(
-            ox_states, stoichs=stoichs, threshold=threshold)
-        # Electronegativity test
-        if cn_e:
-            if use_pauling_test:
-                try:
-                    electroneg_OK = pauling_test(ox_states, electronegs)
-                except TypeError:
-                    # if no electronegativity data, assume it is okay
-                    electroneg_OK = True
-            else:
-                electroneg_OK = True
-            if electroneg_OK:
-                return True
-    return False
 

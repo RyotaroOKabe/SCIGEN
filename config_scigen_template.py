@@ -1,10 +1,5 @@
-home_dir = '/home/rokabe/data2/generative/DiffCSP_v1'
-hydra_dir = '/home/rokabe/data2/generative/hydra/singlerun/'
-job_dir = '2024-09-29/scigen_1'
-out_name = 'sci_hon500_000'   #'file name of generated materials'
-ehull_pred_path = '/path/to/ehull_prediction'
-ehull_pred_name = 'yymmdd-hhmmss'   # ehull classification model name
-ehull_pred_name2 = 'yymmdd-hhmmss'   # ehull classification model2 name
-
-api_key = "Your MP API key"
+home_dir = '/path/to/SCIGEN' # Same as PROJECT_ROOT
+hydra_dir = 'path/to/HYDRA_JOBS/singlerun' # Set as HYDRA_JOBS/singlerun/
+job_dir = 'yyyy-mm-dd/expname' # The directory where the model chkpt/data data stored
+out_name = 'sc_kag500_000'   #'Output name of generated materials'
 seedn = 42

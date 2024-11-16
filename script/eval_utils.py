@@ -7,7 +7,7 @@ from scipy.spatial.distance import pdist
 from scipy.spatial.distance import cdist
 from hydra.experimental import compose
 from hydra import initialize_config_dir
-from pymatgen.core.structure import Structure   #!!
+from pymatgen.core.structure import Structure   
 from pathlib import Path
 
 import smact

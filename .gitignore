@@ -25,9 +25,15 @@ env_sub_torch23-311.yml
 data/*/*.pt
 data*/*/*.pt
 
+#conf 
+conf/data/alex_2d.yaml
+
 # home
+models/
 config_scigen.py
 gen_mul_mt.py
+gen_mul_2d.py
 
 # screening 
 screening/
+

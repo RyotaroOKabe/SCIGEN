@@ -6,11 +6,9 @@ Reference: https://www.notion.so/230408-visualization-of-the-generative-process-
 
 import os
 import sys
-import time
-import numpy as np
 import torch
-import matplotlib.pyplot as plt
 import warnings
+import argparse
 
 # Set default tensor data type and device
 torch.set_default_dtype(torch.float64)
@@ -35,7 +33,17 @@ savedir = join(home_dir, 'figures')
 # Configuration
 combine_cif = False  # Option to combine all structures into a single CIF file
 task = 'gen'
-label = out_name
+# label = out_name
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--job_dir', default=job_dir, type=str)
+parser.add_argument('--label', default=out_name, type=str)
+args = parser.parse_args()
+
+job_dir = args.job_dir
+label = args.label
+
+#%%
 add = f'_{label}' if label else ''
 job_dir = join(hydra_dir, job_dir)
 use_name = f'eval_{task}{add}'
