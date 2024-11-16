@@ -25,13 +25,16 @@ e3nn==0.5.1
 
 other libraries    
 ```
+pandas
 smact
 wandb
+imageio
+...   
 ```
 
 # Config setting   
 Set the configuration files 
-- duplicate .env.template file and rename it as .env. Set the path PROJECT_ROOT, HYDRA_JOBS, WA
+- duplicate .env.template file and rename it as .env. Set the path PROJECT_ROOT, HYDRA_JOBS, WANDB_DIR
 
 
 ### Training
@@ -45,6 +48,7 @@ python scigen/run.py data=mp_20 model=diffusion_w_type expname=<expname>
 config_scigen.py   
 - Set the configuration file 
 - Whether to use the pre-trained model or use your own model. 
+  - download the pre-trained model and store it to scigen/prop_models/mp_20
 
 ### Metastable structure generation
 configuratioin 
