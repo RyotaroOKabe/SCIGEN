@@ -49,10 +49,10 @@ imageio
 
 ## Config Setting   
 Set the configuration files:
-Duplicate `.env.template` file and rename it as `.env`. Modify the following environment variables in .env.
-`PROJECT_ROOT`: path to the folder that contains this repo   
-`HYDRA_JOBS`: path to a folder to store hydra outputs   
-`WANDB`: path to a folder to store wandb outputs   
+Duplicate `.env.template` file and rename it as `.env`. Modify the following environment variables in .env.   
+`PROJECT_ROOT`: path to the folder that contains this repo.   
+`HYDRA_JOBS`: path to a folder to store hydra outputs.   
+`WANDB`: path to a folder to store wandb outputs.   
 
 ---
 
@@ -63,14 +63,14 @@ Use DiffCSP for training:
 python scigen/run.py data=mp_20 model=diffusion_w_type expname=<expname>
 ```
 - `exp_name`: The model name.  
-- The trained model is saved in `HYDRA_JOBS/singlerun/yyyy-mm-dd/expname/`.
+- The trained model is saved in `HYDRA_JOBS/singlerun/yyyy-mm-dd/<expname>/`.
 
 ---
 
 ## Evaluation Task
 
 ### Configurations for material generation
-Make a copy of the `config_scigen.template.py` file and rename it to `config_scigen.py`:
+Make a copy of the `config_scigen.template.py` file and rename it to `config_scigen.py`.
 1. Use the pre-trained model:
    - Download the pre-trained model files:
 ```bash
@@ -85,14 +85,12 @@ job_dir = 'models/mp_20'
 ```
 
 2. Use the model you trained:
-   - Set the configuration file.
-   - Choose to use either the pre-trained model or your own model.
-     - Download the pre-trained model and store it in `scigen/prop_models/mp_20`.
+   - Set the configuration to specify the path to your model in hydra.
 Edit `config_scigen.py` like:
 ```
 home_dir = '/path/to/SCIGEN'
 hydra_dir = 'path/to/HYDRA_JOBS/singlerun'
-job_dir = 'yyyy-mm-dd/expname'
+job_dir = 'yyyy-mm-dd/<expname>'
 ```
 
 ---
@@ -115,15 +113,13 @@ python gen_mul.py
 | `c_scale`              | Scaling factor for the c-axis; `None` means no constraint.                                  | `None`                                  |
 | `c_vert`               | Whether to constrain the c-axis to be vertical.                                             | `False`                                 |
 | `header`               | Prefix for labeling the generated materials.                                                | `'sc'`                                  |
-| `sc_list`              | List of structural constraints (e.g., triangular lattice).                                  | `['tri']`                               |
+| `sc_list`              | List of structural constraints (e.g., triangular lattice).                                  | `['kag']`                               |
 | `atom_list`            | Atomic species to include in the generated materials.                                       | `['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']` |
 | `generate_cif`         | Whether to save the generated materials as CIF files.                                       | `True`                                  |
 
 ### Structural Constraints
 Select from the following lattice types: 
-- **Triangular (tri)**, **Honeycomb (hon)**, **Kagome (kag)**, **Square (square)**, **Elongated (elt)**
-- **Snub square (sns)**, **Truncated square (tsq)**, **Small rhombitrihexagonal (srt)**
-- **Snub hexagonal (snh)**, **Truncated hexagonal (trh)**, **Lieb (lieb)**
+- **Triangular (tri)**, **Honeycomb (hon)**, **Kagome (kag)**, **Square (square)**, **Elongated (elt)**, **Snub square (sns)**, **Truncated square (tsq)**, **Small rhombitrihexagonal (srt)**, **Snub hexagonal (snh)**, **Truncated hexagonal (trh)**, **Lieb (lieb)**, **Vanilla model without structural constraint (van)**
 
 <p align="center">
   <img src="assets/SI_arch_lattice_unit_bk.png" width="500">
@@ -139,18 +135,18 @@ Convert generated outputs into CIF files:
 ```bash
 python script/save_cif.py --label <out_name>
 ```
-- `out_name`: For example, `sc_kag200_000` indicates 200 materials generated with Kagome lattice constraints, indexed as `000`.  
+- `out_name`: For example, `sc_kag200_000` indicates 200 materials generated with Kagome lattice constraints, indexed as `000`. See the output file from `gen_mul.py`
 - If `out_name` is set in `config_scigen.py`, you do not need to set `--label`.
 
 ---
 
-## Generate Movie of Material Generation
+## Generate Movie of Material Generation Trajectory
 
 Set `out_name` in `config_scigen.py`, then run: 
 ```bash
 python gen_movie.py
 ```
-- Set `idx_list` in `gen_movie.py` to specify the indices of the materials for movie generation.
+- Set `idx_list` in `gen_movie.py` to specify the indices of the materials for trajectory movie generation.
 
 ---
 
