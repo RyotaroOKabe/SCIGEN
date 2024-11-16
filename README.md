@@ -34,7 +34,6 @@ pytorch_lightning==1.3.8
 pymatgen==2023.9.25   
 hydra-core==1.1.0
 hydra-joblib-launcher==1.1.5
-e3nn==0.5.1
 ```
 
 ### Other libraries    
