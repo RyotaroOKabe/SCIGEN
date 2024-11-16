@@ -26,9 +26,6 @@ from script.mat_utils import (
 for category in (UserWarning, DeprecationWarning):
     warnings.filterwarnings("ignore", category=category, module="torch")
 
-# Directory for saving figures
-savedir = join(home_dir, 'figures')
-
 #%%
 # Configuration
 combine_cif = False  # Option to combine all structures into a single CIF file

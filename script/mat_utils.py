@@ -5,7 +5,6 @@ import os
 from tqdm import tqdm
 from ase import Atoms
 from ase.data import covalent_radii
-from ase import Atoms
 from ase.visualize.plot import plot_atoms
 from ase.build import make_supercell
 from pymatgen.core import Structure, Lattice
@@ -13,12 +12,9 @@ import matplotlib as mpl
 import math
 import imageio
 from collections import Counter
-from tqdm import tqdm
 import smact
 from smact.screening import pauling_test
 import itertools
-
-# format progress bar
 bar_format = '{l_bar}{bar:10}{r_bar}{bar:-10b}'
 tqdm.pandas(bar_format=bar_format)
 
@@ -74,7 +70,7 @@ chemical_symbols = [
     'Lv', 'Ts', 'Og']
 
 
-def vis_structure(struct_in, ax=None, supercell=np.diag([1,1,1]), title=None, rot='5x,5y,90z', savedir=None, palette=palette):
+def vis_structure(struct_in, ax=None, supercell=np.diag([1,1,1]), title=None, rot='5x,5y,90z', save_dir=None, palette=palette):
     if type(struct_in)==Structure:
         struct = Atoms(list(map(lambda x: x.symbol, struct_in.species)) , # list of symbols got from pymatgen
                 positions=struct_in.cart_coords.copy(),
@@ -103,8 +99,8 @@ def vis_structure(struct_in, ax=None, supercell=np.diag([1,1,1]), title=None, ro
         ftitle = f"{title} / {struct.get_chemical_formula().translate(sub)}"
         fname = f"{title}_{struct.get_chemical_formula()}"
     ax.set_title(ftitle, fontsize=15)
-    if savedir is not None:
-        path = savedir
+    if save_dir is not None:
+        path = save_dir
         if not os.path.isdir(f'{path}'):
             os.mkdir(path)
         fig.savefig(f'{path}/{fname}.png')
@@ -112,20 +108,20 @@ def vis_structure(struct_in, ax=None, supercell=np.diag([1,1,1]), title=None, ro
         return ax
 
 
-def movie_structs(astruct_list, name, t_interval=1, savedir=None, supercell=np.diag([1,1,1])):
-    if not os.path.exists(savedir):
-        os.makedirs(savedir)
+def movie_structs(astruct_list, name, t_interval=1, save_dir=None, supercell=np.diag([1,1,1])):
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
     for i, struct_in in enumerate(astruct_list):
         if i<len(astruct_list):
             if i%t_interval==0:
-                vis_structure(struct_in,  supercell=supercell, title=f"{{0:04d}}".format(i), savedir=savedir)
+                vis_structure(struct_in,  supercell=supercell, title=f"{{0:04d}}".format(i), save_dir=save_dir)
         else: 
-            vis_structure(struct_in,  supercell=supercell, title=f"{{0:04d}}".format(i), savedir=savedir)
+            vis_structure(struct_in,  supercell=supercell, title=f"{{0:04d}}".format(i), save_dir=save_dir)
     
-    with imageio.get_writer(os.path.join(savedir, f'{name}.gif'), mode='I') as writer:
-        for figurename in sorted(os.listdir(savedir)):
+    with imageio.get_writer(os.path.join(save_dir, f'{name}.gif'), mode='I') as writer:
+        for figurename in sorted(os.listdir(save_dir)):
             if figurename.endswith('png'):
-                image = imageio.imread(os.path.join(savedir, figurename))
+                image = imageio.imread(os.path.join(save_dir, figurename))
                 writer.append_data(image)
 
 

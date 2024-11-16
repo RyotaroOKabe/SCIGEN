@@ -23,7 +23,7 @@ sub = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 datasets = ['g', 'y', 'r']
 colors = dict(zip(datasets, palette))
 cmap = mpl.colors.LinearSegmentedColormap.from_list('cmap', [palette[k] for k in [0,2,1]])
-savedir = join(home_dir, 'figures')
+save_dir = join(home_dir, 'figures')
 
 #%%
 label = out_name
@@ -75,15 +75,15 @@ if gen_movie:
     # for _idx in id_stable:
     for i in idx_list:  #range(num):
         idx = format(i, '05')
-        unstable_dir = join(savedir, job, use_name, 'unstable')
+        unstable_dir = join(save_dir, job, use_name, 'unstable')
         gif_name = f"0000_{i}"
         try:
             # idx = int(_idx)
             print(gif_name)
             # print(f'[Stable material!!] {idx}')
-            structdir = join(savedir, job, use_name, idx)
-            movie_structs(traj_pstruct_list[i], t_interval=10, name=gif_name, savedir=structdir, supercell=np.diag([3,3,1]))
-            print("Succeed in saving movie of stable structure in: ", structdir)
+            struct_dir = join(save_dir, job, use_name, idx)
+            movie_structs(traj_pstruct_list[i], t_interval=10, name=gif_name, save_dir=struct_dir, supercell=np.diag([3,3,1]))
+            print("Succeed in saving movie of stable structure in: ", struct_dir)
         except Exception as e:
             print(f'Got an error when generating material ({idx})', e)
     

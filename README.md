@@ -139,10 +139,10 @@ python script/save_cif.py --label <out_name>
 
 Set `out_name` in `config_scigen.py`, then run: 
 ```bash
-python gen_movie.py
+python traj_movie.py
 ```
-- Set `idx_list` in `gen_movie.py` to specify the indices of the materials for trajectory movie generation.
-
+- Set `idx_list` in `traj_movie.py` to specify the indices of the materials for trajectory movie generation.
+- Note that this `traj_movie.py` can run for the outputs whose traj is saved in `gen_mul.py`. 
 ---
 
 ## References
