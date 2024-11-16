@@ -7,7 +7,7 @@ Implementation codes for crystal structure prediction by Joint equivariant diffu
 </p>
 
 <p align="center">
-  <img src="assets/figure1.png" width="500">
+  <img src="assets/figure1.png" width="600">
 </p>
 
 ### Dependencies
@@ -69,7 +69,7 @@ generate_cif = True if you want to generate cif file. (you can run it independen
 
 Select the lattice types (No constraint, Archimedean Lattice, Lieb lattice)
 <p align="center">
-  <img src="assets/SI_arch_lattice_unit_bk.png" width="400">
+  <img src="assets/SI_arch_lattice_unit_bk.png" width="500">
 </p>
 
 
