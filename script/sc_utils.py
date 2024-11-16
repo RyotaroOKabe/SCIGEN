@@ -584,7 +584,7 @@ class SC_ElongatedTriangular(SC_Base):
         self.num_known = cart_known_xy.shape[0]
         cell_xy = self.cell[:2, :2]
         frac_z_known = self.frac_z*torch.ones((self.num_known, 1))
-        self.frac_known = torch.cat([cart2frac(cart_known_xy.to(device), cell_xy.to(device)), frac_z_known.to(device)], dim=-1)    #TODO: need to set
+        self.frac_known = torch.cat([cart2frac(cart_known_xy.to(device), cell_xy.to(device)), frac_z_known.to(device)], dim=-1)   
         self.frac_coords, self.mask_x = self.frac_coords_all()
         # atom types
         self.atom_types, self.mask_t = self.atm_types_all()

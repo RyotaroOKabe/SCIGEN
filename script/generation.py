@@ -2,33 +2,12 @@
 import time
 import argparse
 import torch
-
-from tqdm import tqdm
-from torch.optim import Adam
 from pathlib import Path
-from types import SimpleNamespace
-from torch_geometric.data import Data, Batch, DataLoader
-from torch.utils.data import Dataset
-from eval_utils import load_model, lattices_to_params_shape, get_crystals_list, recommand_step_lr
-
-from pymatgen.core.structure import Structure
-from pymatgen.core.lattice import Lattice
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
-from pymatgen.io.cif import CifWriter
-from pyxtal.symmetry import Group
-import chemparse
-import numpy as np
-import math 
+from torch_geometric.data import DataLoader
+from eval_utils import load_model, lattices_to_params_shape, recommand_step_lr
 import random   
-from sample import chemical_symbols
-from p_tqdm import p_map
-
-import pdb
-
-import os
-
-from scigen.pl_modules.diffusion_w_type import sample_scigen, MAX_ATOMIC_NUM  
-from gen_utils import SampleDataset, convert_seconds_short, parse_none_or_value
+from scigen.pl_modules.diffusion_w_type import sample_scigen
+from gen_utils import SampleDataset, convert_seconds_short
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')   
 
 
@@ -43,7 +22,6 @@ def diffusion(loader, model, step_lr, save_traj):
     all_atom_types = []
     all_lattices = []
     all_lengths, all_angles = [], []    # ignore if we save traj
-    input_data_list = []
     for idx, batch in enumerate(loader):
 
         if torch.cuda.is_available():
@@ -91,16 +69,12 @@ def main(args):
     print('args: ', args)   
     model, _, cfg = load_model(
         model_path, load_data=False)
-
     if torch.cuda.is_available():
         model.to('cuda')
-
     model.sample_scigen = sample_scigen.__get__(model)    
-
     print('Evaluate the diffusion model.')
-
     c_vec_cons = {'scale': args.c_scale, 'vert': args.c_vert}
-    print('c_vec_cons: ', c_vec_cons)
+    # print('c_vec_cons: ', c_vec_cons)
     test_set = SampleDataset(dataset=args.dataset, 
                             #  max_atom=args.max_atom, 
                             natm_range=args.natm_range,
@@ -115,9 +89,7 @@ def main(args):
                             seed = seed,
                             device=device)     
     test_loader = DataLoader(test_set, batch_size = args.batch_size)
-
     step_lr = args.step_lr if args.step_lr >= 0 else recommand_step_lr['gen'][args.dataset]
-
     start_time = time.time()
     (frac_coords, atom_types, lattices, lengths, angles, num_atoms, num_known, \
         all_frac_coords, all_atom_types, all_lattices, all_lengths, all_angles) = diffusion(test_loader, model, step_lr, args.save_traj)    
@@ -166,33 +138,24 @@ if __name__ == '__main__':
     parser.add_argument('--num_batches_to_samples', default=20, type=int)
     parser.add_argument('--batch_size', default=500, type=int)
     parser.add_argument('--label', default='')
-
     # Boolean flags with store_true/store_false
     parser.add_argument('--save_traj', action='store_true', help="Save trajectory during generation")    
     parser.add_argument('--no_save_traj', action='store_false', dest='save_traj', help="Do not save trajectory during generation")
-
     # parser.add_argument('--max_atom', default=20, type=int)
     parser.add_argument('--natm_range', nargs='+', default=[1, 20])
     # parser.add_argument('--max_atom_scale', default=None, type=float) 
     parser.add_argument('--bond_sigma_per_mu', default=None)   
-
     # Boolean flag with store_true/store_false
     parser.add_argument('--use_min_bond_len', action='store_true', help="Use minimum bond length with metallic radius")
     parser.add_argument('--no_use_min_bond_len', action='store_false', dest='use_min_bond_len', help="Do not use minimum bond length")
-
     parser.add_argument('--known_species', nargs='+', default=['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']) 
     parser.add_argument('--sc', nargs='+', default=['kag', 'hon', 'tri', 'sqr']) 
-
     parser.add_argument('--c_scale', default=None, help="Scale to multiply bond length for LZ constraint") 
-
     # Boolean flag with store_true/store_false
     parser.add_argument('--c_vert', action='store_true', help="Use LZ constraint for vertical bonds")
     parser.add_argument('--no_c_vert', action='store_false', dest='c_vert', help="Do not use LZ constraint for vertical bonds")
-
     # Boolean flag with store_true/store_false
     parser.add_argument('--reduced_mask', action='store_true', help="Use reduced mask")
     parser.add_argument('--no_reduced_mask', action='store_false', dest='reduced_mask', help="Do not use reduced mask")
-
     args = parser.parse_args()
-
     main(args)

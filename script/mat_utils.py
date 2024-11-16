@@ -2,14 +2,9 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import os
-from os import listdir
-from os.path import isfile, join
-from os.path import join as opj
-import pandas as pd
 from tqdm import tqdm
-import pickle as pkl
 from ase import Atoms
-from ase.data import atomic_numbers, atomic_names, atomic_masses, covalent_radii
+from ase.data import covalent_radii
 from copy import copy
 bar_format = '{l_bar}{bar:10}{r_bar}{bar:-10b}'
 api_key = "PvfnzQv5PLh4Lzxz1pScKnAtcmmWVaeU"
@@ -23,11 +18,6 @@ import math
 from copy import copy
 import imageio
 from collections import Counter
-import smact
-from smact.screening import pauling_test
-import itertools
-
-# utilities
 from tqdm import tqdm
 
 # format progress bar
@@ -57,10 +47,7 @@ datasets2 = ['train', 'test']
 colors = dict(zip(datasets, palette[:-1]))
 colors2 = dict(zip(datasets2, palette[:-1]))
 cmap = mpl.colors.LinearSegmentedColormap.from_list('cmap', palette)
-# cmap = mpl.colors.LinearSegmentedColormap.from_list('cmap', [palette[k] for k in [0,2,1]])
 from pymatgen.core.structure import Structure
-from pymatgen.core.periodic_table import Element
-# import mendeleev as md 
 
 chemical_symbols = [
     # 0
@@ -454,7 +441,7 @@ def vol_density(astruct):
     return atoms_volume/(abs(lvol)+1e-4)
 
 
-def get_composition(atom_types):    #!!
+def get_composition(atom_types):    
     elem_counter = Counter(atom_types)
     composition = [(elem, elem_counter[elem])
                     for elem in sorted(elem_counter.keys())]
@@ -463,5 +450,6 @@ def get_composition(atom_types):    #!!
     counts = counts / np.gcd.reduce(counts)
     comps = tuple(counts.astype('int').tolist())
     return elems, comps
+
 
 

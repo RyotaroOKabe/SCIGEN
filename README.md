@@ -1,7 +1,6 @@
 
 # Structural Constraint Integration in Generative Model for Discovery of Quantum Material Candidates
-
-Implementation codes for crystal structure prediction by Joint equivariant diffusion with structural constraints.  
+We present Structural Constraint Integration in the GENerative model (SCIGEN), a framework that integrates structural constraints, such as honeycomb or kagome motifs, into generative diffusion models, enabling the generation of materials with targeted geometric patterns. 
 
 <p align="center">
   <img src="assets/scigen_logo.png" width="250">
@@ -50,9 +49,10 @@ imageio
 
 ## Config Setting   
 Set the configuration files:
-- Duplicate `.env.template` file and rename it as `.env`. 
-- Set the following paths: 
-  - `PROJECT_ROOT`, `HYDRA_JOBS`, `WANDB_DIR`
+Duplicate `.env.template` file and rename it as `.env`. Modify the following environment variables in .env.
+`PROJECT_ROOT`: path to the folder that contains this repo   
+`HYDRA_JOBS`: path to a folder to store hydra outputs   
+`WANDB`: path to a folder to store wandb outputs   
 
 ---
 
@@ -62,26 +62,46 @@ Use DiffCSP for training:
 ```bash
 python scigen/run.py data=mp_20 model=diffusion_w_type expname=<expname>
 ```
+- `exp_name`: The model name.  
+- The trained model is saved in `HYDRA_JOBS/singlerun/yyyy-mm-dd/expname/`.
 
 ---
 
 ## Evaluation Task
 
-### Configurations for evaluation
-`config_scigen.py`:
+### Configurations for material generation
+Make a copy of the `config_scigen.template.py` file and rename it to `config_scigen.py`:
 1. Use the pre-trained model:
-   - Download the pre-trained model files.
+   - Download the pre-trained model files:
+```bash
+wget https://figshare.com/ndownloader/articles/27778134/versions/1; unzip 1
+```
    - Place the zip folder in the home directory (`PROJECT_ROOT`) and unzip it.
+Edit `config_scigen.py` like:
+```
+home_dir = '/path/to/SCIGEN'
+hydra_dir = home_dir
+job_dir = 'models/mp_20'
+```
 
 2. Use the model you trained:
    - Set the configuration file.
    - Choose to use either the pre-trained model or your own model.
      - Download the pre-trained model and store it in `scigen/prop_models/mp_20`.
+Edit `config_scigen.py` like:
+```
+home_dir = '/path/to/SCIGEN'
+hydra_dir = 'path/to/HYDRA_JOBS/singlerun'
+job_dir = 'yyyy-mm-dd/expname'
+```
 
 ---
 
 ## Metastable Structure Generation
-
+Run the following to generate structures:
+```bash
+python gen_mul.py
+```
 ### Configuration
 
 | Parameter              | Description                                                                                 | Default Value                           |
@@ -89,7 +109,7 @@ python scigen/run.py data=mp_20 model=diffusion_w_type expname=<expname>
 | `batch_size`           | Number of materials to generate per batch.                                                 | `10`                                    |
 | `num_batches_to_samples` | Number of batches to sample during generation.                                             | `20`                                    |
 | `num_materials`        | Total number of materials to generate (`batch_size * num_batches_to_samples`).              | `batch_size * num_batches_to_samples`   |
-| `save_traj_idx`        | Indices for which the generation trajectory will be saved.                                  | `[]`                                    |
+| `save_traj_idx`        | Indices for which the generation trajectory will be saved.                                  | `[]` (We do not save the trajectory.)  |
 | `num_run`              | Number of independent runs to perform.                                                     | `1`                                     |
 | `idx_start`            | Starting index for labeling generated materials.                                            | `0`                                     |
 | `c_scale`              | Scaling factor for the c-axis; `None` means no constraint.                                  | `None`                                  |
@@ -99,8 +119,7 @@ python scigen/run.py data=mp_20 model=diffusion_w_type expname=<expname>
 | `atom_list`            | Atomic species to include in the generated materials.                                       | `['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']` |
 | `generate_cif`         | Whether to save the generated materials as CIF files.                                       | `True`                                  |
 
-
-### Lattice Types
+### Structural Constraints
 Select from the following lattice types: 
 - **Triangular (tri)**, **Honeycomb (hon)**, **Kagome (kag)**, **Square (square)**, **Elongated (elt)**
 - **Snub square (sns)**, **Truncated square (tsq)**, **Small rhombitrihexagonal (srt)**
@@ -110,10 +129,7 @@ Select from the following lattice types:
   <img src="assets/SI_arch_lattice_unit_bk.png" width="500">
 </p>
 
-Run the following to generate structures:
-```bash
-python gen_mul.py
-```
+*For each structural constraint, the minimum/maximum number of atoms per unit cell can be specified in `sc_natm_range.py`.    
 
 ---
 
@@ -123,16 +139,18 @@ Convert generated outputs into CIF files:
 ```bash
 python script/save_cif.py --label <out_name>
 ```
-*If `out_name` is set in `config_scigen.py`, you do not need to set `--label`.
+- `out_name`: For example, `sc_kag200_000` indicates 200 materials generated with Kagome lattice constraints, indexed as `000`.  
+- If `out_name` is set in `config_scigen.py`, you do not need to set `--label`.
 
 ---
 
 ## Generate Movie of Material Generation
 
-Set `out_name` in `config_scigen.py`, then run:
+Set `out_name` in `config_scigen.py`, then run: 
 ```bash
 python gen_movie.py
 ```
+- Set `idx_list` in `gen_movie.py` to specify the indices of the materials for movie generation.
 
 ---
 
