@@ -69,7 +69,7 @@ python scigen/run.py data=mp_20 model=diffusion_w_type expname=<expname>
 
 ---
 
-## Evaluation Task
+## Material Generation
 
 ### Configurations for material generation
 Make a copy of the `config_scigen.template.py` file and rename it to `config_scigen.py`.
