@@ -150,6 +150,7 @@ python gen_movie.py
 ## References
 
 ### Publication
+If you find our code or dataset useful, please cite the following paper:   
 ```plaintext
 @article{okabe2024structural,
   title={Structural Constraint Integration in Generative Model for Discovery of Quantum Material Candidates},
