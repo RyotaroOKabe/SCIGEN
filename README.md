@@ -58,7 +58,6 @@ Duplicate `.env.template` file and rename it as `.env`. Modify the following env
 ---
 
 ## Training
-Use DiffCSP for training:
 
 ```bash
 python scigen/run.py data=mp_20 model=diffusion_w_type expname=<expname>
