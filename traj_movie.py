@@ -64,34 +64,32 @@ vis_structure(pstruct, supercell=np.diag([1,1,1]), title='pstruct')
 # vis_structure(astruct, supercell=np.diag([1,1,1]), title='astruct')
 
 #%%
-gen_movie = True
 t_step = 1  # Set the time step for the trajectory
 idx_list = [0,1,2]  #TODO: change this to a list of indices you want to generate movie for
-if gen_movie:
-    print(f'[3] Generate images and gifs')
-    start_time3 = time.time()
-    if get_traj:
-        traj_pstruct_list, t_list = get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, t_step, atom_type_prob=False)
-    # for _idx in id_stable:
-    for i in idx_list:  #range(num):
-        idx = format(i, '05')
-        unstable_dir = join(save_dir, job, use_name, 'unstable')
-        gif_name = f"0000_{i}"
-        try:
-            # idx = int(_idx)
-            print(gif_name)
-            # print(f'[Stable material!!] {idx}')
-            struct_dir = join(save_dir, job, use_name, idx)
-            movie_structs(traj_pstruct_list[i], t_interval=10, name=gif_name, save_dir=struct_dir, supercell=np.diag([3,3,1]))
-            print("Succeed in saving movie of stable structure in: ", struct_dir)
-        except Exception as e:
-            print(f'Got an error when generating material ({idx})', e)
-    
-    run_time3 = time.time() - start_time3
-    print(f'Total outputs:{total_num} materials')
-    print(f'run time: {run_time3} sec = {convert_seconds_short(run_time3)}')
-    print(f'{run_time3/total_num} sec/material')
-            
+print(f'[3] Generate images and gifs')
+start_time3 = time.time()
+if get_traj:
+    traj_pstruct_list, t_list = get_traj_pstruct_list(num_atoms, all_frac_coords, all_atom_types, all_lattices, t_step, atom_type_prob=False)
+# for _idx in id_stable:
+for i in idx_list:  #range(num):
+    idx = format(i, '05')
+    unstable_dir = join(save_dir, job, use_name, 'unstable')
+    gif_name = f"0000_{i}"
+    try:
+        # idx = int(_idx)
+        print(gif_name)
+        # print(f'[Stable material!!] {idx}')
+        struct_dir = join(save_dir, job, use_name, idx)
+        movie_structs(traj_pstruct_list[i], t_interval=10, name=gif_name, save_dir=struct_dir, supercell=np.diag([3,3,1]))
+        print("Succeed in saving movie of stable structure in: ", struct_dir)
+    except Exception as e:
+        print(f'Got an error when generating material ({idx})', e)
+
+run_time3 = time.time() - start_time3
+print(f'Total outputs:{total_num} materials')
+print(f'run time: {run_time3} sec = {convert_seconds_short(run_time3)}')
+print(f'{run_time3/total_num} sec/material')
+        
 
 
 # %%

@@ -155,7 +155,6 @@ if __name__ == '__main__':
     parser.add_argument('--c_vert', action='store_true', help="Use LZ constraint for vertical bonds")
     parser.add_argument('--no_c_vert', action='store_false', dest='c_vert', help="Do not use LZ constraint for vertical bonds")
     # Boolean flag with store_true/store_false
-    parser.add_argument('--reduced_mask', action='store_true', help="Use reduced mask")
-    parser.add_argument('--no_reduced_mask', action='store_false', dest='reduced_mask', help="Do not use reduced mask")
+    parser.add_argument('--reduced_mask', action='store_false', help="Use reduced mask")
     args = parser.parse_args()
     main(args)
