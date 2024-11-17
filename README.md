@@ -105,12 +105,12 @@ job_dir = 'yyyy-mm-dd/<expname>'
 | `save_traj_idx`        | Indices for which the generation trajectory will be saved.                                  | `[]` (We do not save the trajectory.)  |
 | `num_run`              | Number of independent runs to perform.                                                     | `1`                                     |
 | `idx_start`            | Starting index for labeling generated materials.                                            | `0`                                     |
-| `c_scale`              | Scaling factor for the c-axis; `None` means no constraint.                                  | `None`                                  |
-| `c_vert`               | Whether to constrain the c-axis to be vertical.                                             | `False`                                 |
 | `header`               | Prefix for labeling the generated materials.                                                | `'sc'`                                  |
 | `sc_list`              | List of structural constraints (e.g., triangular lattice).                                  | `['kag']`                               |
 | `atom_list`            | Atomic species to include in the generated materials.                                       | `['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']` |
-| `generate_cif`         | Whether to save the generated materials as CIF files.                                       | `True`                                  |
+| `c_scale`              | Scaling factor for the c-axis; For example, `1.0` gives the same lengths for lattice vector `L1` and `L2` has `None` means no constraint.                                  | `None`                                  |
+| `c_vert`               | Whether to constrain the c-axis to be vertical.                                             | `False`                                 |
+| `save_cif`         | Whether to save the generated materials as CIF files.                                       | `False`                                  |
 
 ### Structural Constraints
 Select from the following lattice types: 

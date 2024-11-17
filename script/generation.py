@@ -108,7 +108,7 @@ def main(args):
     print(f'{run_time/args.num_batches_to_samples} sec/sample')
     print(f'{run_time/total_num} sec/material')
     
-    torch.save({
+    config = {
         'eval_setting': args,
         'num_atoms': num_atoms,
         'num_known': num_known,
@@ -121,12 +121,11 @@ def main(args):
         'all_lengths': all_lengths,
         'all_angles': all_angles,
         'c_vec_cons': c_vec_cons,
-        'sc_list': args.sc,
-        'known_species': args.known_species,
-        'reduce_mask': args.reduced_mask,
         'seed': seed,
         'time': run_time,
-    }, model_path / gen_out_name)
+    }
+    torch.save(config, model_path / gen_out_name)
+
       
 #%%
 
@@ -138,23 +137,14 @@ if __name__ == '__main__':
     parser.add_argument('--num_batches_to_samples', default=20, type=int)
     parser.add_argument('--batch_size', default=500, type=int)
     parser.add_argument('--label', default='')
-    # Boolean flags with store_true/store_false
-    parser.add_argument('--save_traj', action='store_true', help="Save trajectory during generation")    
-    parser.add_argument('--no_save_traj', action='store_false', dest='save_traj', help="Do not save trajectory during generation")
-    # parser.add_argument('--max_atom', default=20, type=int)
+    parser.add_argument('--save_traj', type=lambda x: x.lower() == 'true', default=False, help="Save trajectory during generation")
     parser.add_argument('--natm_range', nargs='+', default=[1, 20])
-    # parser.add_argument('--max_atom_scale', default=None, type=float) 
     parser.add_argument('--bond_sigma_per_mu', default=None)   
-    # Boolean flag with store_true/store_false
-    parser.add_argument('--use_min_bond_len', action='store_true', help="Use minimum bond length with metallic radius")
-    parser.add_argument('--no_use_min_bond_len', action='store_false', dest='use_min_bond_len', help="Do not use minimum bond length")
+    parser.add_argument('--use_min_bond_len', type=lambda x: x.lower() == 'true', default=False, help="Use minimum bond length with metallic radius")
     parser.add_argument('--known_species', nargs='+', default=['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']) 
     parser.add_argument('--sc', nargs='+', default=['kag', 'hon', 'tri', 'sqr']) 
     parser.add_argument('--c_scale', default=None, help="Scale to multiply bond length for LZ constraint") 
-    # Boolean flag with store_true/store_false
-    parser.add_argument('--c_vert', action='store_true', help="Use LZ constraint for vertical bonds")
-    parser.add_argument('--no_c_vert', action='store_false', dest='c_vert', help="Do not use LZ constraint for vertical bonds")
-    # Boolean flag with store_true/store_false
-    parser.add_argument('--reduced_mask', action='store_false', help="Use reduced mask")
+    parser.add_argument('--c_vert', type=lambda x: x.lower() == 'true', default=False, help="Use LZ constraint for vertical bonds")
+    parser.add_argument('--reduced_mask', type=lambda x: x.lower() == 'true', default=False, help="Use reduced mask")
     args = parser.parse_args()
     main(args)

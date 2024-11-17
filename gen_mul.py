@@ -11,12 +11,12 @@ num_materials = batch_size * num_batches_to_samples
 save_traj_idx = []  # List of indices to save trajectory
 num_run = 1 # Number of runs
 idx_start = 0   # Starting index
-c_scale = None  # Scaling factor for c-axis. None for no constraint
-c_vert = False   # Whether to constrain the c-axis to be vertical
 header = 'sc'   # Header for the label
 sc_list = ['kag']   # List of SCs to generate
 atom_list = ['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']
-save_cif = True # Whether to save CIF files
+c_scale = None  # Scaling factor for c-axis. None for no constraint
+c_vert = False   # Whether to constrain the c-axis to be vertical
+save_cif = False # Whether to save CIF files
 ###################
 
 sc_natm_range = {   # Minimum/Maximum number of atoms in the unit cell (*minumum number of atoms is set as min(sc_natm_range[sc][0], num_known_dict[sc]))
@@ -37,14 +37,14 @@ sc_natm_range = {   # Minimum/Maximum number of atoms in the unit cell (*minumum
 
 # Handle c_scale argument conditionally
 c_scale_arg = f'--c_scale {c_scale}' if c_scale is not None else ''
-c_vert_arg = '--c_vert' if c_vert else '--no_c_vert'
+c_vert_arg = '--c_vert True' if c_vert else ''
 
 for i, sc in enumerate(sc_list):
     for j in range(idx_start, idx_start + num_run):
         tag = format(j, '03d')
         
         # Handle save_traj argument: add `--save_traj` if the current index is in save_traj_idx
-        save_traj_arg = '--save_traj' if j in save_traj_idx else '--no_save_traj'
+        save_traj_arg = '--save_traj True' if j in save_traj_idx else ''
 
         label = f"{header+'_' if len(header) > 0 else ''}{sc}{num_materials}_{tag}"
         natm_range = [str(i) for i in sc_natm_range[sc]]
