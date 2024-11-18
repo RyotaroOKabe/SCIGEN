@@ -131,7 +131,7 @@ class SampleDataset(Dataset):
         self.mask_x_list, self.mask_t_list, self.mask_l_list =  [], [], [] 
         self.get_num_atoms()
         for i, (num_atom, sc, type_known, bond_len, frac_z_known) in enumerate(zip(self.num_atom_list, self.sc_list, self.type_known_list, self.bond_len_list, self.frac_z_known_list)):
-            sc_obj = al_dict[sc] 
+            sc_obj = sc_dict[sc] 
             material = sc_obj(bond_len, num_atom, type_known, frac_z_known, self.c_vec_cons, self.reduced_mask, self.device)    #TODO: add option about c_len scale and mask_l
             self.frac_coords_list.append(material.frac_coords)
             self.atom_types_list.append(material.atom_types)
