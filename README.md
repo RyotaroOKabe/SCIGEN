@@ -140,17 +140,17 @@ python script/save_cif.py --label <out_name>
 
 Pre-screen the generated materials based on stability, and save the CIF files of the screened materials.
 ```bash
-python script/eval_stab.py --label <out_name>
+python script/eval_screen.py --label <out_name>
 ```
 
 Or process multiple outputs by running:
 ```bash
-python stab_mul.py
+python screen_mul.py
 ```
 
 Pre-screen the generated materials based on stability, and then save only magnetic materials.
 ```bash
-python script/eval_mag.py --label <out_name>
+python script/eval_screen.py --label <out_name> --screen_mag True
 ```
 
 ---

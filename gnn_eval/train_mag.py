@@ -74,7 +74,7 @@ weight_decay = 0.05
 schedule_gamma = 0.96 
 
 conf_dict = make_dict([file_name,run_name,model_dir,data_dir,
-                    r_max, tr_ratio,cut_data,nearest_neighbor,batch_size,target,descriptor,
+                    r_max, tr_ratio,cut_data,nearest_neighbor,batch_size,scaler,target,descriptor,
                     stable_threshold,natm_max,change_cells,diff_factor,num_diff, diff_factor_small, num_diff_small, max_iter, 
                     k_fold, lmax, mul, nlayers, number_of_basis,radial_layers, radial_neurons, node_dim,
                     node_embed_dim,input_dim,input_embed_dim,out_dim,irreps_out,loss_fn_name, binary_classification, 

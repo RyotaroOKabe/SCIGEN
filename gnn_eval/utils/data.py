@@ -4,7 +4,7 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 from torch_geometric.data import Data
-from ase import Atoms
+from ase import Atoms, Atom
 from ase.neighborlist import neighbor_list
 from pymatgen.core import Structure, Lattice
 from pymatgen.analysis.local_env import CrystalNN
@@ -62,59 +62,63 @@ class Dataset_Cls(Dataset):
     def _process_dataset(self):
         """Generates a list of graph data for each sample in the dataset."""
         self.data_list = []
-        for _, row in tqdm(self.df.iterrows(), total=self.num_data, desc="Processing dataset"):
+        self.error_dict = {}
+        for i, row in tqdm(self.df.iterrows(), total=self.num_data, desc="Processing dataset"):
+            try: 
+                target  = row[self.target]
+                astruct = row['structure']
+                mpid = row['mpid']
+                symbols = list(astruct.symbols).copy()
+                positions = torch.from_numpy(astruct.get_positions().copy())
+                numb = len(positions)
+                lattice = torch.from_numpy(astruct.cell.array.copy()).unsqueeze(0)
 
-            target  = row[self.target]
-            astruct = row['structure']
-            mpid = row['mpid']
-            symbols = list(astruct.symbols).copy()
-            positions = torch.from_numpy(astruct.get_positions().copy())
-            numb = len(positions)
-            lattice = torch.from_numpy(astruct.cell.array.copy()).unsqueeze(0)
-
-            if self.nearest:
-                edge_src, edge_dst, edge_shift, edge_vec, edge_len = nearest_neighbor_list(a = astruct, weight_cn = True, self_intraction = False)
-            else: 
-                if self.adjust_r_max:
-                    r_max_ = self.r_max
-                    lat_m_mul = 2*lattice.norm(dim=-1).min().item()
-                    if lat_m_mul < r_max_:
-                        r_max_ = lat_m_mul
-                else:
-                    r_max_ = self.r_max
-                edge_src, edge_dst, edge_shift, edge_vec, edge_len = neighbor_list("ijSDd", a = astruct, cutoff = r_max_, self_interaction = True)
+                if self.nearest:
+                    edge_src, edge_dst, edge_shift, edge_vec, edge_len = nearest_neighbor_list(a = astruct, weight_cn = True, self_intraction = False)
+                else: 
+                    if self.adjust_r_max:
+                        r_max_ = self.r_max
+                        lat_m_mul = 2*lattice.norm(dim=-1).min().item()
+                        if lat_m_mul < r_max_:
+                            r_max_ = lat_m_mul
+                    else:
+                        r_max_ = self.r_max
+                    edge_src, edge_dst, edge_shift, edge_vec, edge_len = neighbor_list("ijSDd", a = astruct, cutoff = r_max_, self_interaction = True)
+                    
+                z = create_node_input(astruct.arrays['numbers'], descriptor='one_hot')   # node attribute
+                x = create_node_input(astruct.arrays['numbers'], descriptor=self.descriptor)  # init node feature
+                node_deg = get_node_deg(edge_dst, len(x)) 
                 
-            z = create_node_input(astruct.arrays['numbers'], descriptor='one_hot')   # node attribute
-            x = create_node_input(astruct.arrays['numbers'], descriptor=self.descriptor)  # init node feature
-            node_deg = get_node_deg(edge_dst, len(x)) 
-            
-            if self.scaler is not None:
-                y = torch.tensor([self.scaler.forward(target)]).unsqueeze(0)
-            else: 
-                y = torch.tensor([target]).unsqueeze(0)
-            if self.target == 'ehull':
-                if 'stable' in row.keys():
-                    y = torch.tensor([float(row['stable'])], dtype=torch.float32).unsqueeze(0) 
-                else:
-                    y = torch.tensor([float(target <= 0.1)], dtype=torch.float32).unsqueeze(0) 
-            else:   # mag
-                y = torch.tensor([float(row['label'])], dtype=torch.float32).unsqueeze(0)   #TODO: need the add the case for multi-class classification
+                if self.scaler is not None:
+                    y = torch.tensor([self.scaler.forward(target)]).unsqueeze(0)
+                else: 
+                    y = torch.tensor([target]).unsqueeze(0)
+                if self.target == 'ehull':
+                    if 'stable' in row.keys():
+                        y = torch.tensor([float(row['stable'])], dtype=torch.float32).unsqueeze(0) 
+                    else:
+                        y = torch.tensor([float(target <= 0.1)], dtype=torch.float32).unsqueeze(0) 
+                else:   # mag
+                    y = torch.tensor([float(row['label'])], dtype=torch.float32).unsqueeze(0)   #TODO: need the add the case for multi-class classification
 
-            data = Data(id = mpid,
-                        pos = positions,
-                        lattice = lattice,
-                        symbol = symbols,
-                        r_max = self.r_max,
-                        z = z,
-                        x = x,
-                        y = y,
-                        node_deg = node_deg,
-                        edge_index = torch.stack([torch.LongTensor(edge_src), torch.LongTensor(edge_dst)], dim = 0),
-                        edge_shift = torch.tensor(edge_shift, dtype = torch.float64),
-                        edge_vec = torch.tensor(edge_vec, dtype = torch.float64),
-                        edge_len = torch.tensor(edge_len, dtype = torch.float64),
-                        numb = numb)
-            self.data_list.append(data)     
+                data = Data(id = mpid,
+                            pos = positions,
+                            lattice = lattice,
+                            symbol = symbols,
+                            r_max = self.r_max,
+                            z = z,
+                            x = x,
+                            y = y,
+                            node_deg = node_deg,
+                            edge_index = torch.stack([torch.LongTensor(edge_src), torch.LongTensor(edge_dst)], dim = 0),
+                            edge_shift = torch.tensor(edge_shift, dtype = torch.float64),
+                            edge_vec = torch.tensor(edge_vec, dtype = torch.float64),
+                            edge_len = torch.tensor(edge_len, dtype = torch.float64),
+                            numb = numb)
+                self.data_list.append(data)    
+            except Exception as e:
+                print(f"[{i}] Error in processing {row['mpid']}: {e}") 
+                self.error_dict[row['mpid']] = e
 
     def __len__(self):
         return self.num_data

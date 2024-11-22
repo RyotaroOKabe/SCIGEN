@@ -9,7 +9,7 @@ from ase import Atoms
 from pymatgen.io.ase import AseAtomsAdaptor
 # Local imports
 sys.path.append('../')
-from config_scigen import gnn_eval_path, home_dir, hydra_dir, job_dir, out_name, stab_pred_name_A, stab_pred_name_B, mag_pred_name
+from config_scigen import gnn_eval_path
 sys.path.append(gnn_eval_path)
 from script.mat_utils import (
     get_pstruct_list, output_gen, lattice_params_to_matrix_torch, ase2pmg,
@@ -19,13 +19,14 @@ from gnn_eval.utils.model_class import GraphNetworkClassifier
 from gnn_eval.utils.model_class_mag import GraphNetworkClassifierMag
 from gnn_eval.utils.output import generate_dataframe
 
-def parse_arguments():
+def parse_arguments(job_dir, out_name):
     """Parses command-line arguments."""
     parser = argparse.ArgumentParser(description="Material Stability Classification Pipeline")
     parser.add_argument('--label', default=out_name, type=str, help="Output label name")
     parser.add_argument('--job_dir', default=job_dir, type=str, help="Job directory")
     parser.add_argument('--gen_cif', type=lambda x: x.lower() == 'true', default=True, help="Generate CIF files")
     parser.add_argument('--gen_movie', type=lambda x: x.lower() == 'true', default=False, help="Generate movies of structures")
+    parser.add_argument('--screen_mag', type=lambda x: x.lower() == 'true', default=False, help="Screen magnetic materials")
     return parser.parse_args()
 
 
@@ -52,7 +53,7 @@ def load_model(model_name, param_dict, device, logger):
 
 def load_model_mag(model_name, param_dict, device, logger):
     """Loads and prepares a GNN model."""
-    logger.info(f"Loading model: {model_name}")
+    logger.info(f"Loading model (mag): {model_name}")
     model = GraphNetworkClassifierMag(
         mul=param_dict['mul'],
         irreps_out=param_dict['irreps_out'],
@@ -122,7 +123,7 @@ def classify_stability(model, dataset, loss_fn, scaler, batch_size, device, logg
 
 def generate_cif_files(df, cif_dir, logger):
     """Generates CIF files for filtered structures."""
-    # logger.info("Generating CIF files...")
+    logger.info("Generating CIF files...")
     os.makedirs(cif_dir, exist_ok=True)
     for i, row in df.iterrows():
         mpid, astruct = row['mpid'], row['structure']
@@ -133,4 +134,4 @@ def generate_cif_files(df, cif_dir, logger):
         except Exception as e:
             logger.error(f"Error generating CIF for {mpid}: {e}")
     os.system(f'zip -r {cif_dir}.zip {cif_dir}')
-    # logger.info("CIF generation completed.")
+    logger.info("CIF generation completed.")
