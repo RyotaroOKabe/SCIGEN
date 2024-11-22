@@ -4,7 +4,7 @@ from config_scigen import *
 num_materials = 20
 num_run =1
 idx_start = 0
-header = 'sc'   # 'inp'
+header = 'sc'  
 arch_list = ['kag']  # ['van', 'tri', 'hon', 'kag', 'sqr'] 
 gen_cif = True
 screen_mag = False

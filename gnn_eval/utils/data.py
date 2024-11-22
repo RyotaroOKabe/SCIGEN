@@ -121,7 +121,8 @@ class Dataset_Cls(Dataset):
                 self.error_dict[row['mpid']] = e
 
     def __len__(self):
-        return self.num_data
+        # return self.num_data
+        return len(self.data_list)
     
     def __getitem__(self, index):
         return self.data_list[index]
