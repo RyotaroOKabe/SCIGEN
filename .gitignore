@@ -20,6 +20,7 @@ env_sub_torch201-39.yml
 env_sub_torch23-311.yml
 
 .env
+commands.txt
 
 # data 
 data/*/*.pt
