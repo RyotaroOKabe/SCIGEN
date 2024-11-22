@@ -488,3 +488,8 @@ def smact_validity(comp, count,
             if electroneg_OK:
                 return True
     return False
+
+def charge_neutrality(astruct, use_pauling_test=True, include_alloys=True):
+    atom_types = np.array([chemical_symbols.index(s) for s in astruct.get_chemical_symbols()])
+    elems, comps = get_composition(atom_types)
+    return smact_validity(elems, comps, use_pauling_test, include_alloys)

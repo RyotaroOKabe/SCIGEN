@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import Dataset
 from torch_geometric.data import Data
 from ase import Atoms
+from ase.neighborlist import neighbor_list
 from pymatgen.core import Structure, Lattice
 from pymatgen.analysis.local_env import CrystalNN
 import mendeleev as md

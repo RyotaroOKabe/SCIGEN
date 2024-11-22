@@ -3,6 +3,7 @@ from torch_scatter import scatter_mean, scatter
 from e3nn.o3 import Irrep, Irreps, spherical_harmonics, TensorProduct, FullyConnectedTensorProduct
 from e3nn.nn import Gate, FullyConnectedNet
 from e3nn.math import soft_one_hot_linspace
+import math
 torch.autograd.set_detect_anomaly(True)
 
 def tp_path_exists(irreps_in1, irreps_in2, ir_out):
