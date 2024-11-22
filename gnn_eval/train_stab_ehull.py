@@ -120,8 +120,6 @@ else:
 data['stable'] = np.where(data[target] < stable_threshold, 1, 0)
 logger.info(f"Data loaded: {len(data)}")
 logger.info(f"Stable: {len(data[data['stable']==True])}, Unstable: {len(data[data['stable']==False])}")
-
-data = data[data['stable']==True]
 if cut_data is not None:
     data = data.sample(n=cut_data, random_state=seedn)  # You can adjust the random_state for reproducibility
     data = data.reset_index(drop=True)
