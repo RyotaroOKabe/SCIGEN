@@ -1,0 +1,13 @@
+__pycache__/
+
+archive/
+wandb/
+slurm/
+
+ehull_data_mp20.py
+ehull_data.py
+ehull_train_class_mb.py
+config_stab.py
+config_eval.py
+
+*.sh
