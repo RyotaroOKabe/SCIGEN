@@ -1,6 +1,5 @@
 import os
 from config_scigen import *
-# from inpaint.inpaint_utils import arch_nickname
 
 num_materials = 20
 num_run =1
