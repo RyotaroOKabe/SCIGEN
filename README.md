@@ -20,7 +20,7 @@ We present Structural Constraint Integration in the GENerative model (SCIGEN), a
 - [Convert Output to CIF Files](#convert-output-to-cif-files)
 - [Filter Generated Materials by Pre-Screening Filters](#filter-the-generated-materials-by-pre-screening-filters)
 - [Make Movies of Material Generation Trajectories](#make-movies-of-material-generation-trajectories)
-- 
+- [Create Your Own Structural Constraint](#create-your-own-structural-constraint)
 - [References](#references)
 
 ---
