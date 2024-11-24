@@ -119,7 +119,7 @@ job_dir = 'yyyy-mm-dd/<expname>'
 | `atom_list`            | Atomic species to include in the generated materials.                                       | `['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']` |
 | `c_scale`              | Scaling factor for the c-axis; For example, `1.0` gives the same lengths for lattice vector `L1` and `L2`. `None` means no constraint.                                  | `None`                                  |
 | `c_vert`               | Whether to constrain the c-axis to be vertical.                                             | `False`                                 |
-| `frac_z`               | z-Fractional coordinate of the 2D geometric pattern, as a float in [0, 1). If `None`, return random frac_z value is applied.                                             | `None`                                 |
+| `frac_z`               | z-Fractional coordinate of the 2D geometric pattern, as a float in [0, 1). If `None`, return random frac_z value.                                             | `None`                                 |
 | `save_cif`         | Whether to save the generated materials as CIF files.                                       | `False`                                  |
 
 ### Structural Constraints
