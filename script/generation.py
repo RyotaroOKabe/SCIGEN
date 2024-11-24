@@ -7,7 +7,7 @@ from torch_geometric.data import DataLoader
 from eval_utils import load_model, lattices_to_params_shape, recommand_step_lr
 import random   
 from scigen.pl_modules.diffusion_w_type import sample_scigen
-from gen_utils import SampleDataset, convert_seconds_short
+from gen_utils import SampleDataset, convert_seconds_short, parse_none_or_value
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')   
 
 
@@ -76,14 +76,13 @@ def main(args):
     c_vec_cons = {'scale': args.c_scale, 'vert': args.c_vert}
     # print('c_vec_cons: ', c_vec_cons)
     test_set = SampleDataset(dataset=args.dataset, 
-                            #  max_atom=args.max_atom, 
                             natm_range=args.natm_range,
-                            #  max_atom_scale=args.max_atom_scale, 
                             total_num=args.batch_size * args.num_batches_to_samples, 
                             bond_sigma_per_mu=args.bond_sigma_per_mu,
                             use_min_bond_len=args.use_min_bond_len,
                             known_species=args.known_species, 
                             sc_list=args.sc, 
+                            frac_z=args.frac_z,
                             c_vec_cons=c_vec_cons,
                             reduced_mask=args.reduced_mask,
                             seed = seed,
@@ -145,6 +144,7 @@ if __name__ == '__main__':
     parser.add_argument('--sc', nargs='+', default=['kag', 'hon', 'tri', 'sqr']) 
     parser.add_argument('--c_scale', default=None, help="Scale to multiply bond length for LZ constraint") 
     parser.add_argument('--c_vert', type=lambda x: x.lower() == 'true', default=False, help="Use LZ constraint for vertical bonds")
+    parser.add_argument('--frac_z', default=None, type=parse_none_or_value, help="Fraction of z-coordinate of the 2D geometric pattern. If None, return random frac_z in [0, 1).")
     parser.add_argument('--reduced_mask', type=lambda x: x.lower() == 'true', default=False, help="Use reduced mask")
     args = parser.parse_args()
     main(args)

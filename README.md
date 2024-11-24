@@ -2,7 +2,7 @@
 # Structural Constraint Integration in Generative Model for Discovery of Quantum Material Candidates
 We present Structural Constraint Integration in the GENerative model (SCIGEN), a framework that integrates structural constraints, such as honeycomb or kagome motifs, into generative diffusion models, enabling the generation of materials with targeted geometric patterns. 
 
-[https://arxiv.org/abs/2407.04557](https://arxiv.org/abs/2407.04557)
+[Read our preprint on arXiv](https://arxiv.org/abs/2407.04557)
 
 <p align="center">
   <img src="assets/scigen_logo.png" width="250">
@@ -20,6 +20,7 @@ We present Structural Constraint Integration in the GENerative model (SCIGEN), a
 - [Convert Output to CIF Files](#convert-output-to-cif-files)
 - [Filter Generated Materials by Pre-Screening Filters](#filter-the-generated-materials-by-pre-screening-filters)
 - [Make Movies of Material Generation Trajectories](#make-movies-of-material-generation-trajectories)
+- 
 - [References](#references)
 
 ---
@@ -54,6 +55,13 @@ Duplicate `.env.template` file and rename it as `.env`. Modify the following env
 `PROJECT_ROOT`: path to the folder that contains this repo.   
 `HYDRA_JOBS`: path to a folder to store hydra outputs.   
 `WANDB`: path to a folder to store wandb outputs.   
+
+```bash
+PROJECT_ROOT = "/home/user/SCIGEN"
+HYDRA_JOBS = "/home/user/SCIGEN/hydra"
+WANDB = "/home/user/SCIGEN/wandb"
+
+```
 
 ---
 
@@ -111,6 +119,7 @@ job_dir = 'yyyy-mm-dd/<expname>'
 | `atom_list`            | Atomic species to include in the generated materials.                                       | `['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']` |
 | `c_scale`              | Scaling factor for the c-axis; For example, `1.0` gives the same lengths for lattice vector `L1` and `L2`. `None` means no constraint.                                  | `None`                                  |
 | `c_vert`               | Whether to constrain the c-axis to be vertical.                                             | `False`                                 |
+| `frac_z`               | Fraction of z-coordinate of the 2D geometric pattern. If None, return random frac_z in [0, 1).                                             | `None`                                 |
 | `save_cif`         | Whether to save the generated materials as CIF files.                                       | `False`                                  |
 
 ### Structural Constraints
@@ -164,6 +173,72 @@ python traj_movie.py
 - Set `idx_list` in `traj_movie.py` to specify the indices of the materials for trajectory movie generation.
 
 ---
+
+## Create Your Own Structural Constraint
+
+SCIGEN allows you to define custom structural constraints for material generation. Follow these steps to implement and integrate your own constraints into the framework.
+
+### Step 1: Create a New Class
+1. Go to `script/sc_utils.py`.
+2. Duplicate the `SC_Template` class and rename it, e.g., `SC_YourOwn`.
+
+### Step 2: Customize the Structural Constraint Class
+Edit the following properties to define your custom structural constraint:
+
+- **`a_scale`, `b_scale`**: Set the scaling of lattice vector lengths relative to the nearest neighbor distance.
+- **`gamma`**: Define the lattice angle (\(\gamma\)).
+- **`frac_known`**: Specify the fractional coordinates of the constrained atoms.
+
+**Example:**
+```python
+class SC_YourOwn(SC_Base):
+    def __init__(self, bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device):
+        super().__init__(bond_len, num_atom, type_known, frac_z, c_vec_cons, reduced_mask, device)
+        # Lattice 
+        self.a_scale, self.b_scale = 2.0, 2.0  #TODO: Set scaling with respect to self.bond_len.
+        self.cell = self.get_cell(gamma=90)   #TODO: Define lattice matrix angle (\gamma).
+        # Atom Coordinates
+        self.frac_known = torch.tensor([[0.0, 0.0, self.frac_z],
+                                        [0.5, 0.0, self.frac_z]])  #TODO: Fractional coordinates.
+        self.num_known = self.frac_known.shape[0]
+```
+
+### Step 3: Add the Class to the Constraint Dictionary
+Add your new class to `sc_dict` in `script/sc_utils.py` with a short name.
+
+**Example:**
+```python
+sc_dict = {'tri': SC_Triangular, 'hon': SC_Honeycomb, 'kag': SC_Kagome, 
+           ..., 'your': SC_YourOwn}
+```
+
+### Step 4: (Optional) Specify Atom Count Distribution
+Define the probability distribution of the number of atoms per unit cell for your structural constraint in `natm_dist_sc` in `script/sc_natm.py`. If omitted, the default distribution will be used.
+
+**Example:**
+```python
+natm_dist_sc = {
+    ...
+    'your': [0.0, 0.0021, 0.0211, 0.0198, 0.1527, ...],  # Probability for atom counts, starting from 0 atom/cel.
+}
+```
+
+### Step 5: Define Atom Count Range
+Set the minimum and maximum number of atoms per unit cell for your structural constraint in `sc_natm_range` in `gen_mul.py`.
+
+**Example:**
+```python
+sc_natm_range = {   
+    ...
+    'your': [1, 20],   # Minimum: 1, Maximum: 20
+}
+```
+
+### Step 6: Test Your Constraint
+- Run `python gen_mul.py` with `sc_list=['your']` to test material generation using your custom constraint.
+
+
+
 
 ## References
 
