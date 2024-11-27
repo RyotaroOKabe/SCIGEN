@@ -185,7 +185,7 @@ python script/traj_movie.py --label sc_kag200_000 --idx_list 1 3 5 --supercell 2
 
 ### Notes:
 - Ensure that trajectory data (`traj`) was saved during material generation with `gen_mul.py` for the selected materials.
-- The generated movies are stored in the folder specified by `out_name`.
+- The generated movies are stored in the folder: `figures/job_dir/out_name/index/`.
 
 
 ---
