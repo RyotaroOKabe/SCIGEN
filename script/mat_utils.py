@@ -1,47 +1,40 @@
+import os
+import math
+import itertools
+from collections import Counter
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
-import os
 from tqdm import tqdm
-from ase import Atoms
-from ase.data import covalent_radii
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 from ase.visualize.plot import plot_atoms
 from ase.build import make_supercell
-from pymatgen.core import Structure, Lattice
-import matplotlib as mpl
-import math
 import imageio
-from collections import Counter
+from ase import Atoms
+from ase.data import covalent_radii
+from pymatgen.core import Structure, Lattice
 import smact
 from smact.screening import pauling_test
-import itertools
+import periodictable
 bar_format = '{l_bar}{bar:10}{r_bar}{bar:-10b}'
 tqdm.pandas(bar_format=bar_format)
-
-# standard formatting for plots
-fontsize = 16
-textsize = 14
-sub = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
-plt.rcParams['font.family'] = 'lato'
-plt.rcParams['axes.linewidth'] = 1
-plt.rcParams['mathtext.default'] = 'regular'
-plt.rcParams['xtick.bottom'] = True
-plt.rcParams['ytick.left'] = True
-plt.rcParams['font.size'] = fontsize
-plt.rcParams['axes.labelsize'] = fontsize
-plt.rcParams['xtick.labelsize'] = fontsize
-plt.rcParams['ytick.labelsize'] = fontsize
-plt.rcParams['legend.fontsize'] = textsize
-
-
-# colors for datasets
+plt.rcParams.update({
+    'font.family': 'lato',
+    'axes.linewidth': 1,
+    'mathtext.default': 'regular',
+    'xtick.bottom': True,
+    'ytick.left': True,
+    'font.size': 16,
+    'axes.labelsize': 16,
+    'xtick.labelsize': 16,
+    'ytick.labelsize': 16,
+    'legend.fontsize': 14,
+})
 palette = ['#43AA8B', '#F8961E', '#F94144', '#277DA1']
-datasets = ['train', 'valid', 'test']
-datasets2 = ['train', 'test']
-colors = dict(zip(datasets, palette[:-1]))
-colors2 = dict(zip(datasets2, palette[:-1]))
+colors = dict(zip(['train', 'valid', 'test'], palette[:-1]))
 cmap = mpl.colors.LinearSegmentedColormap.from_list('cmap', palette)
-from pymatgen.core.structure import Structure
+sub = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
+# import mendeleev as md 
 
 chemical_symbols = [
     # 0
@@ -79,9 +72,7 @@ def vis_structure(struct_in, ax=None, supercell=np.diag([1,1,1]), title=None, ro
         struct=struct_in
     struct = make_supercell(struct, supercell)
     symbols = np.unique(list(struct.symbols))
-    len_symbs = len(list(struct.symbols))
     z = dict(zip(symbols, range(len(symbols))))
-
     if ax is None:
         fig, ax = plt.subplots(figsize=(6,5))
         fig.patch.set_facecolor('white')
@@ -108,21 +99,23 @@ def vis_structure(struct_in, ax=None, supercell=np.diag([1,1,1]), title=None, ro
         return ax
 
 
-def movie_structs(astruct_list, name, t_interval=1, save_dir=None, supercell=np.diag([1,1,1])):
+def movie_structs(astruct_list, name, t_interval=1, save_dir=None, supercell=np.diag([1,1,1]), rot='5x,5y,90z'):
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    for i, struct_in in enumerate(astruct_list):
+    for i, struct_in in tqdm(enumerate(astruct_list), desc='Generating Images', total=len(astruct_list)):
         if i<len(astruct_list):
             if i%t_interval==0:
-                vis_structure(struct_in,  supercell=supercell, title=f"{{0:04d}}".format(i), save_dir=save_dir)
+                vis_structure(struct_in,  supercell=supercell, title=f"{{0:04d}}".format(i), rot=rot, save_dir=save_dir)
         else: 
-            vis_structure(struct_in,  supercell=supercell, title=f"{{0:04d}}".format(i), save_dir=save_dir)
+            vis_structure(struct_in,  supercell=supercell, title=f"{{0:04d}}".format(i), rot=rot, save_dir=save_dir)
     
     with imageio.get_writer(os.path.join(save_dir, f'{name}.gif'), mode='I') as writer:
-        for figurename in sorted(os.listdir(save_dir)):
+        image_files = sorted(os.listdir(save_dir))
+        for figurename in tqdm(image_files, desc='Generating GIF', total=len(image_files)):
             if figurename.endswith('png'):
                 image = imageio.imread(os.path.join(save_dir, figurename))
                 writer.append_data(image)
+
 
 
 # material data conversion

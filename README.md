@@ -165,12 +165,28 @@ python script/eval_screen.py --label <out_name> --screen_mag True
 ---
 
 ## Make Movies of Material Generation Trajectories
-
-Set `out_name` in `config_scigen.py`, then run: 
+Visualize the trajectory of material generation.
 ```bash
-python traj_movie.py
+python script/traj_movie.py --label <out_name> --idx_list <list_of_indices> --supercell <nx ny nz>
 ```
-- Set `idx_list` in `traj_movie.py` to specify the indices of the materials for trajectory movie generation.
+
+### Parameters:
+- **`out_name`**: The name of the output folder containing the generated materials.  
+  For example, `sc_kag200_000` refers to 200 materials generated with Kagome lattice constraints, indexed as `000`.  
+  - If `out_name` is already set in `config_scigen.py`, you do not need to specify `--label`.  
+- **`idx_list`**: A space-separated list of material indices for which trajectory movies will be generated (e.g., `1 3 5`).  
+- **`supercell`**: The size of the supercell used for visualization, formatted as `nx ny nz`. The default is `1 1 1`.
+
+### Example Command:
+Generate trajectory movies for materials indexed as 00001, 00003, and 00005 from `sc_kag200_000`, with a `2x2x1` supercell:
+```bash
+python script/traj_movie.py --label sc_kag200_000 --idx_list 1 3 5 --supercell 2 2 1
+```
+
+### Notes:
+- Ensure that trajectory data (`traj`) was saved during material generation with `gen_mul.py` for the selected materials.
+- The generated movies are stored in the folder specified by `out_name`.
+
 
 ---
 

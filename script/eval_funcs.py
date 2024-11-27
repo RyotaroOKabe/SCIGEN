@@ -27,7 +27,10 @@ def parse_arguments(job_dir, out_name):
     parser.add_argument('--gen_cif', type=lambda x: x.lower() == 'true', default=True, help="Generate CIF files")
     parser.add_argument('--gen_movie', type=lambda x: x.lower() == 'true', default=False, help="Generate movies of structures")
     parser.add_argument('--screen_mag', type=lambda x: x.lower() == 'true', default=False, help="Screen magnetic materials")
+    parser.add_argument('--idx_list', nargs='+', default=['0', '1', '2'])
+    parser.add_argument('--supercell', nargs='+', default=['1', '1', '1']) 
     return parser.parse_args()
+
 
 
 def load_model(model_name, param_dict, device, logger):
