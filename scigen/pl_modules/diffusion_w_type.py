@@ -228,17 +228,16 @@ def sample_scigen(self, batch, diff_ratio = 1.0, step_lr = 1e-5):
     t_0_known = F.one_hot(batch.atom_types_known - 1, num_classes=MAX_ATOMIC_NUM).float()
     
     mask_l, mask_x, mask_t = batch.mask_l, batch.mask_x, batch.mask_t   
+    mask_t = mask_t.unsqueeze(-1)
     if len(mask_l.shape) == 2:
         print('Use reduce mask')
-        mask_x, mask_l, mask_t = mask_x.unsqueeze(-1), mask_l.unsqueeze(-1), mask_t.unsqueeze(-1)
-    else: 
-        print('Use complete mask')
-        mask_x, mask_t = mask_x.unsqueeze(-1), mask_t.unsqueeze(-1)
+        mask_x, mask_l = mask_x.unsqueeze(-1), mask_l.unsqueeze(-1)
     mask_x_inv, mask_l_inv, mask_t_inv = 1 - mask_x, 1 - mask_l, 1 - mask_t
 
-    # print('num_atoms: ', batch.num_atoms)
-    # print('mask_x, x_T_known, x_T_unk: ', mask_x.shape, x_T_known.shape, x_T_unk.shape) 
-    # print('mask_l, l_T_known, l_T_unk: ', mask_l.shape, l_T_known.shape, l_T_unk.shape)
+    print('num_atoms: ', batch.num_atoms)
+    print('mask_x, x_T_known, x_T_unk: ', mask_x.shape, x_T_known.shape, x_T_unk.shape) 
+    print('mask_l, l_T_known, l_T_unk: ', mask_l.shape, l_T_known.shape, l_T_unk.shape)
+    print('mask_t, t_T_known, t_T_unk: ', mask_t.shape, t_T_known.shape, t_T_unk.shape)
 
     x_T = mask_x * x_T_known + mask_x_inv * x_T_unk    
     l_T = mask_l * l_T_known + mask_l_inv * l_T_unk    

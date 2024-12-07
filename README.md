@@ -36,6 +36,8 @@ pytorch_lightning==1.3.8
 pymatgen==2023.9.25   
 hydra-core==1.1.0
 hydra-joblib-launcher==1.1.5
+matminer==0.7.3
+torchmetrics==0.7.3
 ```
 
 ### Other libraries    
@@ -44,6 +46,11 @@ pandas
 smact
 wandb
 imageio
+python-dotenv
+p-tqdm
+pytest
+einops
+pyxtal
 ...
 ```
 

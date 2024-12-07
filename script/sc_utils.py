@@ -193,7 +193,8 @@ class SC_Base():
         fcoords[:self.num_known, :] = self.frac_known
         fcoords = fcoords%1
         mask[:self.num_known, :] = torch.ones_like(self.frac_known) 
-        mask = mask[:, 0].flatten()   #TODO: mask dimension must be (N, 3), which was transformed  from (N,) in the original code
+        if self.reduced_mask:
+            mask = mask[:, 0].flatten()   #TODO: mask dimension must be (N, 3), which was transformed  from (N,) in the original code
         # return fcoords, mask
         self.frac_coords, self.mask_x = fcoords, mask
         if not self.use_constraints:
