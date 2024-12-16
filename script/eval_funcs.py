@@ -79,7 +79,9 @@ def load_model_mag(model_name, param_dict, device, logger):
 def process_data(output_path, logger):
     """Processes structure data from output."""
     logger.info("Processing structure data...")
-    frac_coords, atom_types, lengths, angles, num_atoms, _, all_frac_coords, all_atom_types, all_lengths, all_angles = output_gen(output_path)
+    frac_coords, atom_types, lengths, angles, num_atoms, _, all_frac_coords, all_atom_types, all_lengths, all_angles, eval_setting = output_gen(output_path)
+    for k, v in eval_setting.items():
+        logger.info(f"{k}: {v}")
     lattices = lattice_params_to_matrix_torch(lengths, angles).to(dtype=torch.float32)
     get_traj = all(len(a) > 0 for a in [all_frac_coords, all_atom_types, all_lengths, all_angles])
     

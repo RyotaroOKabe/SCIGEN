@@ -210,10 +210,11 @@ def output_gen(data_path):
     num_atoms = data['num_atoms']
     frac_coords = data['frac_coords']
     atom_types = data['atom_types']
-    if 'eval_setting' in keys:
+    try: 
         eval_setting = data['eval_setting']
-    else: 
-        eval_setting =  ''
+        eval_setting = eval_setting.__dict__
+    except:
+        eval_setting = ''
     if 'time' in keys:
         time = data['time']
     else: 
@@ -226,7 +227,7 @@ def output_gen(data_path):
     else: 
         all_frac_coords, all_atom_types, all_lengths, all_angles = None, None, None, None
     return frac_coords, atom_types, lengths, angles, num_atoms, time, \
-        all_frac_coords, all_atom_types, all_lengths, all_angles
+        all_frac_coords, all_atom_types, all_lengths, all_angles, eval_setting
 
 
 def get_pstruct_list(num_atoms, frac_coords, atom_types, lattices, atom_type_prob=True):
