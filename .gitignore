@@ -34,6 +34,7 @@ models/
 config_scigen.py
 gen_mul_mt.py
 gen_mul_2d.py
+gen_mul_ro.py
 
 # screening 
 screening/
