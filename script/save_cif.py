@@ -9,6 +9,7 @@ import sys
 import torch
 import warnings
 import argparse
+import json
 
 # Set default tensor data type and device
 torch.set_default_dtype(torch.float64)
@@ -48,7 +49,7 @@ use_path = join(job_dir, f'{use_name}.pt')
 
 # Load data from generated output
 frac_coords, atom_types, lengths, angles, num_atoms, run_time, \
-    all_frac_coords, all_atom_types, all_lengths, all_angles = output_gen(use_path)
+    all_frac_coords, all_atom_types, all_lengths, all_angles, eval_setting = output_gen(use_path)
 
 # Convert lattice parameters to matrix format
 lattices = lattice_params_to_matrix_torch(lengths, angles).to(dtype=torch.float32)
@@ -84,3 +85,8 @@ else:
         cif_path = join(cif_dir, filename)
         struct.to(fmt="cif", filename=cif_path)
         print(f"Saved: {cif_path}")
+
+# save eval_setting as json if eval_setting is a dictionary
+if isinstance(eval_setting, dict):
+    with open(join(cif_dir, 'eval_setting.json'), 'w') as f:
+        json.dump(eval_setting, f)
