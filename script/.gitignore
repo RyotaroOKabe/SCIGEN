@@ -7,4 +7,7 @@ crystalnn_bond.py
 eval_stability_traj.py
 eval_stability.py
 
+sc_utils_extra.py
+*hetero.py
+
 sample.py

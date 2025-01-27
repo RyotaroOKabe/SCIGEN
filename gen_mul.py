@@ -5,19 +5,19 @@ from config_scigen import hydra_dir, job_dir
 ############
 model_path = join(hydra_dir, job_dir)
 dataset = 'mp_20'
-batch_size = 10 # Number of materials to generate in one batch
-num_batches_to_samples = 2 # Number of batches to sample
+batch_size = 200 # Number of materials to generate in one batch
+num_batches_to_samples = 250 # Number of batches to sample
 num_materials = batch_size * num_batches_to_samples
 save_traj_idx = []  # List of indices to save trajectory
-num_run = 1 # Number of runs
+num_run = 2 # Number of runs
 idx_start = 0   # Starting index
 header = 'sc'   # Header for the label
-sc_list = ['kag']   # List of SCs to generate
-atom_list = ['Mn', 'Fe', 'Co', 'Ni', 'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']
+sc_list = ['tri', 'hon', 'kag', 'sqr', 'elt']   # List of SCs to generate
+atom_list = ['Ti']#'Ru', 'Nd', 'Gd', 'Tb', 'Dy', 'Yb']
 c_scale = None  # Scaling factor for c-axis. None for no constraint
 c_vert = False   # Whether to constrain the c-axis to be vertical
 frac_z = 0.5   # Fraction of z-axis for mask. If None, frac_z is radomly selected in [0, 1).
-save_cif = True # Whether to save CIF files
+save_cif = False # Whether to save CIF files
 ###################
 
 sc_natm_range = {   # Minimum/Maximum number of atoms in the unit cell (*minumum number of atoms is set as min(sc_natm_range[sc][0], num_known_dict[sc]))
