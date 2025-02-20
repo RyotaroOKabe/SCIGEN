@@ -32,10 +32,10 @@ def parse_arguments(job_dir, out_name):
     return parser.parse_args()
 
 
-
-def load_model(model_name, param_dict, device, logger):
+def load_model(model_name, param_dict, device, logger=None):
     """Loads and prepares a GNN model."""
-    logger.info(f"Loading model: {model_name}")
+    if logger is not None:
+        logger.info(f"Loading model: {model_name}")
     model = GraphNetworkClassifier(
         mul=param_dict['mul'],
         irreps_out=param_dict['irreps_out'],
@@ -54,9 +54,10 @@ def load_model(model_name, param_dict, device, logger):
     return model.to(device).eval()
 
 
-def load_model_mag(model_name, param_dict, device, logger):
+def load_model_mag(model_name, param_dict, device, logger=None):
     """Loads and prepares a GNN model."""
-    logger.info(f"Loading model (mag): {model_name}")
+    if logger is not None:
+        logger.info(f"Loading model (mag): {model_name}")
     model = GraphNetworkClassifierMag(
         mul=param_dict['mul'],
         irreps_out=param_dict['irreps_out'],
@@ -76,12 +77,15 @@ def load_model_mag(model_name, param_dict, device, logger):
     return model.to(device).eval()
 
 
-def process_data(output_path, logger):
+def process_data(output_path, logger=None):
     """Processes structure data from output."""
     logger.info("Processing structure data...")
     frac_coords, atom_types, lengths, angles, num_atoms, _, all_frac_coords, all_atom_types, all_lengths, all_angles, eval_setting = output_gen(output_path)
-    for k, v in eval_setting.items():
-        logger.info(f"{k}: {v}")
+    if isinstance(eval_setting, dict):
+        logger.info("------ Generation settings ------")
+        for k, v in eval_setting.items():
+            logger.info(f"{k}: {v}")
+        logger.info("-------------------------------")
     lattices = lattice_params_to_matrix_torch(lengths, angles).to(dtype=torch.float32)
     get_traj = all(len(a) > 0 for a in [all_frac_coords, all_atom_types, all_lengths, all_angles])
     
@@ -96,7 +100,7 @@ def process_data(output_path, logger):
     return astruct_list
 
 
-def load_df(astruct_list, logger):
+def load_df(astruct_list, logger=None):
     # logger.info("Loading structures into DataFrame...")
     rows = []
     for i, struct in enumerate(astruct_list):
@@ -113,20 +117,22 @@ def load_df(astruct_list, logger):
         rows.append(row)
 
     df = pd.DataFrame(rows)
-    logger.info(f"Loaded {len(df)} structures into DataFrame.")
+    if logger is not None:
+        logger.info(f"Loaded {len(df)} structures into DataFrame.")
     return df
 
 
-def classify_stability(model, dataset, loss_fn, scaler, batch_size, device, logger):
+def classify_stability(model, dataset, loss_fn, scaler, batch_size, device, logger=None):
     """Classifies stability using the given GNN model."""
-    logger.info("Classifying material stability...")
+    if logger is not None:
+        logger.info("Classifying material stability...")
     te_set = torch.utils.data.Subset(dataset, range(len(dataset)))
     loader = DataLoader(te_set, batch_size=batch_size)
     print(loader)
     return generate_dataframe(model, loader, loss_fn, scaler, device)
 
 
-def generate_cif_files(df, cif_dir, logger):
+def generate_cif_files(df, cif_dir, logger=None):
     """Generates CIF files for filtered structures."""
     logger.info("Generating CIF files...")
     os.makedirs(cif_dir, exist_ok=True)

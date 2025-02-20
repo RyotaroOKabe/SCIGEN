@@ -5,6 +5,7 @@ figures/
 slurm/
 conf_sg/
 save_tmp/
+demos/
 dir.py
 multiple_gen.py
 multiple_gen2.py
@@ -38,12 +39,18 @@ gen_mul_ro.py
 gen_mul_elem.py
 gen_mul_natm_elem.py
 gen_mul_hetero.py
+gen_mul_sub.py
 
 
 crystalnn_bond.py
+search_comp_ro.py
+search_comp.py
+rename_ptfile_ro.py
 mat_statistics.py
 mat_statistics.ipynb
 mat_statistics2.ipynb
+screen_mul_elem.py
+screen_mul_ro.py
 
 # screening 
 screening/
