@@ -36,7 +36,9 @@ config_scigen.py
 gen_mul_mt.py
 gen_mul_2d.py
 gen_mul_ro.py
+gen_mul_ro2.py
 gen_mul_elem.py
+gen_mul_elem_ro1.py
 gen_mul_natm_elem.py
 gen_mul_hetero.py
 gen_mul_sub.py

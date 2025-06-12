@@ -7,6 +7,7 @@ import torch
 from torch_geometric.loader import DataLoader
 from ase import Atoms
 from pymatgen.io.ase import AseAtomsAdaptor
+import zipfile
 # Local imports
 sys.path.append('../')
 from config_scigen import gnn_eval_path
@@ -144,5 +145,10 @@ def generate_cif_files(df, cif_dir, logger=None):
             pstruct.to(fmt="cif", filename=filename)
         except Exception as e:
             logger.error(f"Error generating CIF for {mpid}: {e}")
-    os.system(f'zip -r {cif_dir}.zip {cif_dir}')
-    logger.info("CIF generation completed.")
+
+    zip_name = f"{cif_dir}.zip"
+    with zipfile.ZipFile(zip_name, 'w') as zipf:
+        for file in os.listdir(cif_dir):
+            if file.endswith('.cif'):
+                zipf.write(join(cif_dir, file), arcname=file)
+    logger.info("CIF generation and zipping completed.")

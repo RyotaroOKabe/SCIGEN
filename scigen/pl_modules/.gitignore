@@ -32,3 +32,5 @@ config_scigen.py
 screening/
 diffusion_w_type_mt.py
 diffusion.py
+diffusion_w_type_stop.py
+diffusion_w_type_stop_separate.py

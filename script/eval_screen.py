@@ -6,6 +6,7 @@ import torch
 from torch import nn
 # Local imports
 sys.path.append('../')
+print(sys.path)  # Print all directories Python searches for modules
 from config_scigen import gnn_eval_path, home_dir, hydra_dir, job_dir, out_name, stab_pred_name_A, stab_pred_name_B, mag_pred_name
 sys.path.append(gnn_eval_path)
 from gnn_eval.utils.data import Dataset_Cls
