@@ -17,6 +17,7 @@ multiple_gen7.py
 multiple_gen8.py
 multiple_stab.py
 gen_mul_elem_cifs.py
+gen_mul_stop_separate.py
 *.sh
 env_sub_torch201-39.yml
 env_sub_torch23-311.yml
