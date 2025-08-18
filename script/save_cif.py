@@ -10,6 +10,7 @@ import torch
 import warnings
 import argparse
 import json
+import zipfile
 
 # Set default tensor data type and device
 torch.set_default_dtype(torch.float64)
@@ -90,3 +91,10 @@ else:
 if isinstance(eval_setting, dict):
     with open(join(cif_dir, 'eval_setting.json'), 'w') as f:
         json.dump(eval_setting, f)
+
+zip_name = f"{cif_dir}.zip"
+with zipfile.ZipFile(zip_name, 'w') as zipf:
+    for file in os.listdir(cif_dir):
+        if file.endswith('.cif'):
+            zipf.write(join(cif_dir, file), arcname=file)
+print(f"All CIF files are saved in {cif_dir} and zipped as {zip_name}.")
