@@ -1,5 +1,5 @@
 
-# Structural Constraint Integration in Generative Model for Discovery of Quantum Material Candidates
+# Structural Constraint Integration in a Generative Model for the Discovery of Quantum Materials
 We present Structural Constraint Integration in the GENerative model (SCIGEN), a framework that integrates structural constraints, such as honeycomb or kagome motifs, into generative diffusion models, enabling the generation of materials with targeted geometric patterns. 
 
 [Read our preprint on arXiv](https://arxiv.org/abs/2407.04557)
