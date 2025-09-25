@@ -280,10 +280,11 @@ If you find our code or dataset useful, please cite the following paper:
 ```bibtex
 @article{okabe2025structural,
   title={Structural constraint integration in a generative model for the discovery of quantum materials},
-  author={Okabe, Ryotaro and Cheng, Mouyang and Chotrattanapituk, Abhijatmedhi and Mandal, Manasi and Mak, Kiran and Carrizales, Denisse Córdova and Hung, Nguyen Tuan and Fu, Xiang and Han, Bowen and Wang, Yao and Xie, Weiwei and Cava, Robert J. and Jaakkola, Tommi S. and Cheng, Yongqiang and Li, Mingda},
+  author={Okabe, Ryotaro and Cheng, Mouyang and Chotrattanapituk, Abhijatmedhi and Mandal, Manasi and Mak, Kiran and C{\'o}rdova Carrizales, Denisse and Hung, Nguyen Tuan and Fu, Xiang and Han, Bowen and Wang, Yao and others},
   journal={Nature Materials},
+  pages={1--8},
   year={2025},
-  publisher={Nature Publishing Group US New York}
+  publisher={Nature Publishing Group UK London}
 }
 
 ```
