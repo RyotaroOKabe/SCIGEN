@@ -42,7 +42,7 @@ Duplicate `config_eval_template.py` and rename it as `config_eval.py`. Modify th
 - `matbench_data_dir`: Path to a folder where you store Matbench Discovery data (required for `train_stab_ehull.py`): [Figshare link](https://doi.org/10.6084/m9.figshare.22715158.v19).  
 
 ### [2] Download the Training Dataset  
-Download the training dataset from the [Figshare link](https://doi.org/10.6084/m9.figshare.27887097.v2) and store it in `gnn_eval/data/`.  
+Download the training dataset from the [Figshare link](https://doi.org/10.6084/m9.figshare.27887097) and store it in `gnn_eval/data/`.  
 
 ### [3] GNN for Classifying Pristine and Diffused Structures  
 This model classifies whether a material structure is pristine or diffused.
@@ -51,13 +51,13 @@ python train_stab_diff.py
 ```
 
 ### [4] GNN for Classifying Materials with Formation Energy Below 0.1 eV  
-This model identifies materials with energy above the convex hull (`ehull`) below 0.1 eV.
+This model identifies materials with energy above the convex hull (`ehull`) below 0.1 eV. [Pre-trained model is available here:](https://doi.org/10.6084/m9.figshare.27887097)    
 ```bash
 python train_stab_ehull.py
 ```
 
 ### [5] GNN for Classifying Magnetic and Non-Magnetic Materials  
-This model predicts whether a material is magnetic/non-magnetic.
+This model predicts whether a material is magnetic/non-magnetic. [Pre-trained model is available here:](https://doi.org/10.6084/m9.figshare.27887097)    
 ```bash
 python train_mag.py
 ```
