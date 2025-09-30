@@ -51,13 +51,13 @@ python train_stab_diff.py
 ```
 
 ### [4] GNN for Classifying Materials with Formation Energy Below 0.1 eV  
-This model identifies materials with energy above the convex hull (`ehull`) below 0.1 eV. [Pre-trained model is available here:](https://doi.org/10.6084/m9.figshare.27887097)    
+This model identifies materials with energy above the convex hull (`ehull`) below 0.1 eV. Pre-trained model is available [here](https://doi.org/10.6084/m9.figshare.27887097).    
 ```bash
 python train_stab_ehull.py
 ```
 
 ### [5] GNN for Classifying Magnetic and Non-Magnetic Materials  
-This model predicts whether a material is magnetic/non-magnetic. [Pre-trained model is available here:](https://doi.org/10.6084/m9.figshare.27887097)    
+This model predicts whether a material is magnetic/non-magnetic. Pre-trained model is available [here](https://doi.org/10.6084/m9.figshare.27887097).     
 ```bash
 python train_mag.py
 ```
